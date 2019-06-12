@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net461</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Core Rules.fs" />
+    <Compile Include="Types.fs" />
+    <Compile Include="Operators.fs" />
+    <None Include="App.config" />
+    <Compile Include="Parser.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="FParsec" />
+  </ItemGroup>
+  <Import Project="..\.paket\Paket.Restore.targets" />
+</Project>
