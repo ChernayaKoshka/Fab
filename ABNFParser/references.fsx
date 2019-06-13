@@ -1,5 +1,5 @@
-#r @"C:\Users\Chris\.nuget\packages\fparsec\1.0.3\lib\net40-client\FParsecCS.dll"
 #r @"C:\Users\Chris\.nuget\packages\fparsec\1.0.3\lib\net40-client\FParsec.dll"
+#r @"C:\Users\Chris\.nuget\packages\fparsec\1.0.3\lib\net40-client\FParsecCS.dll"
 #r @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6.1\System.Core.dll"
 #r @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6.1\System.Data.dll"
 #r @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6.1\System.Drawing.dll"
@@ -12,5 +12,5 @@
 #load @"c:\Users\Chris\OneDrive\BitBucket\ABNF Parser\ABNFParser\obj\Debug\net461\Parser.AssemblyInfo.fs"
 #load @"c:\Users\Chris\OneDrive\BitBucket\ABNF Parser\ABNFParser\Core Rules.fs"
 #load @"c:\Users\Chris\OneDrive\BitBucket\ABNF Parser\ABNFParser\Types.fs"
-#load @"c:\Users\Chris\OneDrive\BitBucket\ABNF Parser\ABNFParser\Operators.fs"
+#load @"c:\Users\Chris\OneDrive\BitBucket\ABNF Parser\ABNFParser\Grammar.fs"
 #load @"c:\Users\Chris\OneDrive\BitBucket\ABNF Parser\ABNFParser\Parser.fs"

@@ -1,9 +1,7 @@
 #load @"references.fsx"
 open System
 open FParsec
-open ABNF.Types
-open ABNF.CoreRules
-open ABNF.Grammar
+open ABNF
 
 run pRule """last-name        = *ALPHA ; this is a test comment"""
 
@@ -151,7 +149,7 @@ let CoreRuleParsingTest =
         "CTL"
         "CR"
         "LF"
-        //"CRLF"
+        "CRLF"
         "BIT"
     ]
     |> List.map (fun str ->

@@ -1,9 +1,8 @@
 [<AutoOpen>]
 module ABNF.Grammar
+open ABNF
 open FParsec
-open CoreRules
 open System
-open Types
 
 let isDebugMode = false
 
