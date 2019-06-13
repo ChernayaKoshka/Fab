@@ -1,13 +1,14 @@
-module Operators
+[<AutoOpen>]
+module ABNF.Grammar
 open FParsec
 open CoreRules
 open System
 open Types
 
-let isTestMode = false
+let isDebugMode = false
 
 let (<!>) (p: Parser<_>) label : Parser<_> =
-    if not isTestMode then
+    if not isDebugMode then
         p
     else
         fun stream ->

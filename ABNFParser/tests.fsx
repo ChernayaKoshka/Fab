@@ -1,9 +1,9 @@
 #load @"references.fsx"
 open System
 open FParsec
-open Types
-open CoreRules
-open Operators
+open ABNF.Types
+open ABNF.CoreRules
+open ABNF.Grammar
 
 run pRule """last-name        = *ALPHA ; this is a test comment"""
 

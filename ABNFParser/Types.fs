@@ -1,4 +1,5 @@
-module Types
+[<AutoOpen>]
+module ABNF.Types
 
 type RuleName = string
 

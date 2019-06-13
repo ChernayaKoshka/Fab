@@ -6,7 +6,7 @@
   <ItemGroup>
     <Compile Include="Core Rules.fs" />
     <Compile Include="Types.fs" />
-    <Compile Include="Operators.fs" />
+    <Compile Include="Grammar.fs" />
     <None Include="App.config" />
     <Compile Include="Parser.fs" />
   </ItemGroup>

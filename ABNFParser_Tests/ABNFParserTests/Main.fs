@@ -1,7 +1,11 @@
 module ABNFParserTests
 
 open Expecto
+open System
 
 [<EntryPoint>]
 let main argv =
-    Tests.runTestsInAssembly defaultConfig argv
+    let res = Tests.runTestsInAssembly defaultConfig argv
+    Console.ReadLine()
+    |> ignore
+    res

@@ -1,10 +1,13 @@
 module Tests
 
 open Expecto
+open ABNF.Types
+open ABNF.CoreRules
+open ABNF.Grammar
 
 [<Tests>]
 let tests =
-  testList "samples" [
+  testList "simple parsing tests" [
     testCase "universe exists" <| fun _ ->
       let subject = true
       Expect.isTrue subject "I compute, therefore I am."
