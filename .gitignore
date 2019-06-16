@@ -392,3 +392,4 @@ paket-files/
 .idea/
 *.sln.iml
 references.fsx
+test.fsx
