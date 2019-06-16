@@ -6,11 +6,11 @@ type RuleName = string
 type Terminal = char
 
 type Range =
-    {
-        Start   : uint8 option
-        IsRange : bool
-        End     : uint8 option
-    }
+    | Any
+    | AtLeast of uint8
+    | AtMost of uint8
+    | Exactly of uint8
+    | Between of (uint8 * uint8)
 
 /// Strings, names formation
 /// Comment
