@@ -11,9 +11,11 @@ let (<!>) (p: Parser<_>) label : Parser<_> =
         p
     else
         fun stream ->
-            printfn "%A: Entering %s |%s|" stream.Position label (stream.PeekString(int stream.Column + int stream.IndexOfLastCharPlus1))
+            printfn "%A: Entering %s" stream.Position label
+            printfn "|%s|" (stream.PeekString(int stream.Column + int stream.IndexOfLastCharPlus1))
             let reply = p stream
-            printfn "%A: Leaving %s (%A)|%s|" stream.Position label reply.Status (stream.PeekString(int stream.Column + int stream.IndexOfLastCharPlus1))
+            printfn "%A: Leaving %s (%A)" stream.Position label reply.Status
+            printfn "|%s|" (stream.PeekString(int stream.Column + int stream.IndexOfLastCharPlus1))
             reply
 
 let pSpace = pchar ' '
@@ -57,29 +59,24 @@ let pTerminals : Parser<_> =
             let reply = pTerminal stream
             if reply.Status = ReplyStatus.Ok then
                 let (terminalType, result) = reply.Result
-                let reply' = many ((pchar '.') >>. pTerminalValueAs terminalType) stream
+
+                let reply' =
+                    if stream.Peek() = '.' then
+                        (many ((pchar '.') >>. pTerminalValueAs terminalType)
+                        |>> (fun chars -> result :: chars)) stream
+                    else if (stream.Peek() = '-') then
+                        ((pchar '-') >>. pTerminalValueAs terminalType
+                        |>> (fun range -> [ for i in [result..range] do yield char i ])) stream
+                    else
+                        Reply([result])
+
                 if reply'.Status = ReplyStatus.Ok then
-                    Reply(Terminals (result :: reply'.Result))
+                    Reply(Terminals (reply'.Result))
                 else
                     Reply(reply'.Status, reply'.Error)
             else
                 Reply(reply.Status, reply.Error)
     p <!> "pTerminals"
-
-let pTerminalRange : Parser<_> =
-    let p =
-        fun stream ->
-            let reply = pTerminal stream
-            if reply.Status = ReplyStatus.Ok then
-                let (terminalType, result) = reply.Result
-                let reply' = ((pchar '-') >>. pTerminalValueAs terminalType) stream
-                if reply'.Status = ReplyStatus.Ok then
-                    Reply(Terminals ([ for i in [result..reply'.Result] do yield char i ]))
-                else
-                    Reply(reply'.Status, reply'.Error)
-            else
-                Reply(reply.Status, reply.Error)
-    p <!> "pTerminalRange"
 
 let ruleChars = ALPHA @ DIGIT @ ['-'; '<'; '>']
 
@@ -138,12 +135,12 @@ let (pRuleElement, pRuleElementRef) : (Parser<Element> * Parser<Element> ref) = 
 
 let (pNotSequence, pNotSequenceRef) : (Parser<Element> * Parser<Element> ref) = createParserForwardedToRef()
 let pSequence : Parser<_> =
-    sepBy1 pNotSequence pSpace
+    sepEndBy1 pNotSequence pSpace
     |>> Sequence
     <!> "pSequence"
 
 let pOptionalGroup : Parser<_> =
-    between (pchar '[') (pchar ']') pSequence
+    between (pchar '[' .>> pWhitespace) (pWhitespace >>. pchar ']') pSequence
     |>> OptionalSequence
     <!> "pOptionalGroup"
 
@@ -163,7 +160,7 @@ let pAlternates : Parser<_> =
     p <!> "pAlternates"
 
 let pSequenceGroup : Parser<_> =
-    between (pchar '(') (pchar ')') pSequence
+    between (pchar '(' .>> pWhitespace) (pWhitespace >>. pchar ')') pSequence
     <!> "pSequenceGroup"
 
 let pRepetition : Parser<_> =
@@ -178,19 +175,19 @@ let pRepetition : Parser<_> =
                 match reply.Result with
                 // 1
                 | (Some startNum, None  , None) ->
-                    Reply({ Start = Some startNum; IsRange = false; End = None })
+                    Reply(Exactly startNum)
                 // 1*
                 | (Some num,      Some _, None) ->
-                    Reply({ Start = Some num;      IsRange = true;  End = None })
+                    Reply(AtLeast num)
                 // 1*2
                 | (Some startNum, Some _, Some endNum) ->
-                    Reply({ Start = Some startNum; IsRange = true;  End = Some endNum })
+                    Reply(Between(startNum, endNum))
                 //  *2
                 | (None         , Some _, Some endNum) ->
-                    Reply({ Start = None;          IsRange = true;  End = Some endNum })
+                    Reply(AtMost endNum)
                 //  *
                 | (None         , Some _, None) ->
-                    Reply({ Start = None;          IsRange = true;  End = None })
+                    Reply(Any)
                 | _ ->
                     Reply(ReplyStatus.Error, ErrorMessageList(Expected("String in format of 2, 2*4, *4, *")))
             else
@@ -214,7 +211,7 @@ do pRuleElementRef :=
         [
             (pSequenceGroup <|> pOptionalGroup)
             pAlternates
-            (pTerminals <|> pTerminalRange <|> pCoreRule)
+            (pTerminals <|> (attempt pCoreRule))
             pRuleReference
             pString
         ]
@@ -225,7 +222,7 @@ do pNotAlternatesRef :=
         [
             pNotAlternatesWithRepetition
             (pSequenceGroup <|> pOptionalGroup)
-            (pTerminals <|> pTerminalRange <|> pCoreRule)
+            (pTerminals <|> (attempt pCoreRule))
             pRuleReference
             pString
         ]
@@ -236,7 +233,7 @@ do pNotSequenceRef :=
         [
             (pSequenceGroup <|> pOptionalGroup)
             pAlternates
-            (pTerminals <|> pTerminalRange <|> pCoreRule)
+            (pTerminals <|> (attempt pCoreRule))
             pString
         ]
     <!> "pRuleElement"
@@ -247,6 +244,7 @@ let pRule : Parser<_> =
     .>>  pchar '='
     .>>  optional (pchar '/')
     .>>  pWhitespace
-    .>>. sepBy1 pRuleElement (pchar ' ' .>>.? notFollowedBy (anyOf [ ' '; ';' ]))
+    .>>. sepBy1 pAlternates (pchar ' ' .>>.? notFollowedBy (anyOf [ ' '; ';' ]))
     .>>  pWhitespace
     .>>  ((pComment |>> ignore) <|> (newline |>> ignore) <|> eof)
+    <!> "pRule"
