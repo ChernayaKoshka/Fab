@@ -114,9 +114,9 @@ let pCoreRule : Parser<_> =
             stringReturn "ALPHA"  (Alternatives (terminals ALPHA))
             stringReturn "DIGIT"  (Alternatives (terminals DIGIT))
             stringReturn "HEXDIG" (Alternatives (terminals HEXDIG))
-            stringReturn "DQUOTE" (Alternatives [Terminals [DQUOTE]])
-            stringReturn "SP"     (Alternatives [Terminals [SP]])
-            stringReturn "HTAB"   (Alternatives [Terminals [HTAB]])
+            stringReturn "DQUOTE" (Terminals [DQUOTE])
+            stringReturn "SP"     (Terminals [SP])
+            stringReturn "HTAB"   (Terminals [HTAB])
             stringReturn "WSP"    (Alternatives (terminals WSP))
             //TODO: LWSP?
             stringReturn "VCHAR"  (Alternatives (terminals VCHAR))
@@ -124,8 +124,8 @@ let pCoreRule : Parser<_> =
             stringReturn "OCTET"  (Alternatives (terminals OCTET))
             stringReturn "CTL"    (Alternatives (terminals CTL))
             stringReturn "CRLF"   (Terminals [CR; LF])
-            stringReturn "CR"     (Alternatives [Terminals [CR]])
-            stringReturn "LF"     (Alternatives [Terminals [LF]])
+            stringReturn "CR"     (Terminals [CR])
+            stringReturn "LF"     (Terminals [LF])
             stringReturn "BIT"    (Alternatives (terminals BIT))
         ]
     .>> followedBy (skipAnyOf ([ '['; ']'; '('; ')'; ' '; ';']) <|> eof)
@@ -246,5 +246,8 @@ let pRule : Parser<_> =
     .>>  pWhitespace
     .>>. sepBy1 pAlternates (pchar ' ' .>>.? notFollowedBy (anyOf [ ' '; ';' ]))
     .>>  pWhitespace
-    .>>  ((pComment |>> ignore) <|> (newline |>> ignore) <|> eof)
+    .>>  ((pComment |>> ignore) <|> (followedBy ((newline |>> ignore) <|> eof)))
     <!> "pRule"
+
+let pDocument : Parser<_> =
+    many1 (pRule .>> pWhitespace .>> (skipMany1 skipNewline <|> eof))
