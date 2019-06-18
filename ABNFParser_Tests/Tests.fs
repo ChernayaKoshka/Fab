@@ -79,16 +79,16 @@ let simple =
                 (@"ALPHA", Alternatives (ALPHA |> List.map (fun c -> Terminals [c])))
                 (@"DIGIT", Alternatives (DIGIT |> List.map (fun c -> Terminals [c])))
                 (@"HEXDIG", Alternatives (HEXDIG |> List.map (fun c -> Terminals [c])))
-                (@"DQUOTE", Alternatives ([Terminals [ DQUOTE ]]))
-                (@"SP", Alternatives ([Terminals [ SP ]]))
-                (@"HTAB", Alternatives ([Terminals [ HTAB ]]))
+                (@"DQUOTE", Terminals [ DQUOTE ])
+                (@"SP", Terminals [ SP ])
+                (@"HTAB", Terminals [ HTAB ])
                 (@"WSP", Alternatives (WSP |> List.map (fun c -> Terminals [c])))
                 (@"VCHAR", Alternatives (VCHAR |> List.map (fun c -> Terminals [c])))
                 (@"CHAR", Alternatives (CHAR |> List.map (fun c -> Terminals [c])))
                 (@"OCTET", Alternatives (OCTET |> List.map (fun c -> Terminals [c])))
                 (@"CTL", Alternatives (CTL |> List.map (fun c -> Terminals [c])))
-                (@"CR", Alternatives ([Terminals [ CR ]]))
-                (@"LF", Alternatives ([Terminals [ LF ]]))
+                (@"CR", Terminals [ CR ])
+                (@"LF", Terminals [ LF ])
                 (@"CRLF", Terminals (List.ofArray <| CRLF.ToCharArray()))
                 (@"BIT", Alternatives (BIT |> List.map (fun c -> Terminals [c])))
             ]
@@ -279,10 +279,10 @@ let rules =
                 (@"name-part        = *(personal-part SP) last-name [SP suffix] CRLF", ("name-part",
                     [Repetition
                        (Any,
-                        Sequence [RuleReference "personal-part"; Alternatives [Terminals [' ']]]);
+                        Sequence [RuleReference "personal-part"; Terminals [' ']]);
                      RuleReference "last-name";
                      OptionalSequence
-                       (Sequence [Alternatives [Terminals [' ']]; RuleReference "suffix"]);
+                       (Sequence [Terminals [' ']; RuleReference "suffix"]);
                      Terminals ['\013'; '\010']]))
                 (@"name-part        =/ personal-part CRLF", ("name-part", [RuleReference "personal-part"; Terminals ['\013'; '\010']]))
                 (@"personal-part    = first-name / (initial ""."")", ("personal-part",
@@ -348,8 +348,8 @@ let rules =
                                 [Alternatives [Terminals ['I']; Terminals ['V']; Terminals ['X']]])]]]))
                 (@"street           = [apt SP] house-num SP street-name CRLF", ("street",
                     [OptionalSequence
-                       (Sequence [RuleReference "apt"; Alternatives [Terminals [' ']]]);
-                     RuleReference "house-num"; Alternatives [Terminals [' ']];
+                       (Sequence [RuleReference "apt"; Terminals [' ']]);
+                     RuleReference "house-num"; Terminals [' '];
                      RuleReference "street-name"; Terminals ['\013'; '\010']]))
                 (@"apt              = 1*4DIGIT", ("apt",
                     [Repetition
@@ -410,9 +410,9 @@ let rules =
                            Terminals ['y']; Terminals ['z']; Terminals ['{']; Terminals ['|'];
                            Terminals ['}']; Terminals ['~']])]))
                 (@"zip-part         = town-name "","" SP state 1*2SP zip-code CRLF", ("zip-part",
-                    [RuleReference "town-name"; Terminals [',']; Alternatives [Terminals [' ']];
+                    [RuleReference "town-name"; Terminals [',']; Terminals [' '];
                      RuleReference "state";
-                     Repetition (Between(1uy, 2uy),Alternatives [Terminals [' ']]);
+                     Repetition (Between(1uy, 2uy),Terminals [' ']);
                      RuleReference "zip-code"; Terminals ['\013'; '\010']]))
                 (@"town-name        = 1*(ALPHA / SP)", ("town-name",
                     [Repetition
@@ -433,7 +433,7 @@ let rules =
                                  Terminals ['o']; Terminals ['p']; Terminals ['q']; Terminals ['r'];
                                  Terminals ['s']; Terminals ['t']; Terminals ['u']; Terminals ['v'];
                                  Terminals ['w']; Terminals ['x']; Terminals ['y']; Terminals ['z']];
-                              Alternatives [Terminals [' ']]]])]))
+                              Terminals [' ']]])]))
                 (@"state            = 2ALPHA", ("state",
                     [Repetition
                        (Exactly 2uy,

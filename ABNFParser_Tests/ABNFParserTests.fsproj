@@ -4,7 +4,7 @@
     <TargetFramework>net461</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\ABNFParser\Parser.fsproj">
+    <ProjectReference Include="..\ABNFParser\Parser.fsproj">
       <Name>Parser.fsproj</Name>
     </ProjectReference>
   </ItemGroup>
@@ -17,5 +17,5 @@
   <ItemGroup>
     <Reference Include="FParsec" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+  <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>
