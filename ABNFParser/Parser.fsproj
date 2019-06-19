@@ -10,7 +10,7 @@
     <Compile Include="Types.fs" />
     <Compile Include="Grammar.fs" />
     <None Include="App.config" />
-    <Compile Include="Parser.fs" />
+    <Compile Include="Execution.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec" />

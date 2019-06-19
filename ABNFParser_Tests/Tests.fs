@@ -3,6 +3,7 @@ module Tests
 open Expecto
 open Expecto.FParsec
 open ABNF
+open ABNF.Execution
 open FParsec
 open Expecto.Flip
 
@@ -722,4 +723,19 @@ let rules =
                     let res = (run pRule str)
                     Expect.isSuccess res "What is this field for?"
                     Expect.equal "What is this field for?" expected (unwrap res)))
+    ]
+
+[<Tests>]
+let execution =
+    testList "rule execution tests" [
+        testList "terminal parsing test"
+           ([
+                (Terminals [ 'a'; 'b'; 'c' ], { Text = "abc"; Pos = 0 },(true, { Text = "abc"; Pos = 3 }))
+                (Terminals [ 'a'; 'b'; 'c' ], { Text = "123"; Pos = 0 },(false, { Text = "123"; Pos = 0 }))
+                (Terminals [ 'a'; 'b'; 'c' ], { Text = "!abc"; Pos = 1 },(true, { Text = "!abc"; Pos = 4 }))
+            ]
+            |> List.map (fun (element, ruleStream, expected) ->
+                testCase (sprintf "terminal parsing test: %A" expected) <| fun _ ->
+                    let res = matchElements [] ruleStream [element]
+                    Expect.equal "What is this field for?" expected res))
     ]
