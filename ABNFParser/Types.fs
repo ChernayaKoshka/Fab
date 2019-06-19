@@ -12,26 +12,30 @@ type Range =
     | Exactly of uint8
     | Between of (uint8 * uint8)
 
-/// Strings, names formation
-/// Comment
-/// Value range
-/// Repetition
-/// Grouping, optional
-/// Concatenation
-/// Alternative
-type Rule =
+
+type RuleElement =
+    | Terminals        of Terminal list   // %x20, %x20.21, %x20-21
+    | Alternatives     of RuleElement list    // %x20 / %x21
+    | OptionalSequence of RuleElement         // [optional]
+    | Group            of RuleElement list    // (%20 %21)
+    | Sequence         of RuleElement list    // a b c
+    | Repetition       of Range * RuleElement // 2*3(%20 %21)
+    | RuleReference    of string
+
+type ABNFRule =
     {
         RuleName : RuleName
-        Definition : Element
+        Definition : RuleElement list
     }
-and Element =
-    | Comment          of string          // ; comment
-    | Rule             of Rule            // rulename = definition
-    | Terminals        of Terminal list   // %x20, %x20.21, %x20-21
-    | Reference        of RuleName        // rulename = reference-name
-    | Alternatives     of Element list    // %x20 / %x21
-    | OptionalSequence of Element         // [optional]
-    | Group            of Element list    // (%20 %21)
-    | Sequence         of Element list    // a b c
-    | Repetition       of Range * Element // 2*3(%20 %21)
-    | RuleReference    of string
+
+type AST =
+    | Rule of ABNFRule
+    | Element of RuleElement
+
+type RuleStream =
+    {
+        Text : string
+        Pos  : int
+    }
+    member this.Peek() =
+        this.Text.[this.Pos]
