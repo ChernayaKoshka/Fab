@@ -96,7 +96,6 @@ let pRuleReference : Parser<_> =
 let pComment : Parser<_> =
     pchar ';'
     >>. restOfLine false
-    |>> Comment
     <!> "pComment"
 
 let pString : Parser<_> =
@@ -131,9 +130,9 @@ let pCoreRule : Parser<_> =
     .>> followedBy (skipAnyOf ([ '['; ']'; '('; ')'; ' '; ';']) <|> eof)
     <!> "pCoreRule"
 
-let (pRuleElement, pRuleElementRef) : (Parser<Element> * Parser<Element> ref) = createParserForwardedToRef()
+let (pRuleElement, pRuleElementRef) : (Parser<RuleElement> * Parser<RuleElement> ref) = createParserForwardedToRef()
 
-let (pNotSequence, pNotSequenceRef) : (Parser<Element> * Parser<Element> ref) = createParserForwardedToRef()
+let (pNotSequence, pNotSequenceRef) : (Parser<RuleElement> * Parser<RuleElement> ref) = createParserForwardedToRef()
 let pSequence : Parser<_> =
     sepEndBy1 pNotSequence pSpace
     |>> Sequence
@@ -144,7 +143,7 @@ let pOptionalGroup : Parser<_> =
     |>> OptionalSequence
     <!> "pOptionalGroup"
 
-let (pNotAlternates, pNotAlternatesRef) : (Parser<Element> * Parser<Element> ref) = createParserForwardedToRef()
+let (pNotAlternates, pNotAlternatesRef) : (Parser<RuleElement> * Parser<RuleElement> ref) = createParserForwardedToRef()
 let pAlternates : Parser<_> =
     let p =
         fun stream ->
@@ -249,5 +248,9 @@ let pRule : Parser<_> =
     .>>  ((pComment |>> ignore) <|> (followedBy ((newline |>> ignore) <|> eof)))
     <!> "pRule"
 
+let pRuleRecord : Parser<_> =
+    pRule
+    |>> (fun (name, elements) -> { RuleName = name; Definition = elements })
+
 let pDocument : Parser<_> =
-    many1 (pRule .>> pWhitespace .>> (skipMany1 skipNewline <|> eof))
+    many1 (pRuleRecord .>> pWhitespace .>> (skipMany1 skipNewline <|> eof))
