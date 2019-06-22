@@ -738,4 +738,68 @@ let execution =
                 testCase (sprintf "terminal parsing test: %A" expected) <| fun _ ->
                     let res = matchElements [] ruleStream [element]
                     Expect.equal "What is this field for?" expected res))
+        testList "repetition parsing tests" [
+          testList "terminal Any repetition parsing test"
+             ([
+                  (Repetition (Any, Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabc"; Pos = 0 },(true, { Text = "abcabc"; Pos = 6 }))
+                  (Repetition (Any, Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabcabcabc"; Pos = 0 },(true, { Text = "abcabcabcabc"; Pos = 12 }))
+                  (Repetition (Any, Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabcabcabc!"; Pos = 0 },(true, { Text = "abcabcabcabc!"; Pos = 12 }))
+                  (Repetition (Any, Terminals [ 'a'; 'b'; 'c' ]), { Text = "123abc"; Pos = 0 },(true, { Text = "123abc"; Pos = 0 }))
+                  (Repetition (Any, Terminals [ 'a'; 'b'; 'c' ]), { Text = "!abc"; Pos = 1 },(true, { Text = "!abc"; Pos = 4 }))
+              ]
+              |> List.map (fun (element, ruleStream, expected) ->
+                  testCase (sprintf "terminal Any repetition parsing test: %A" expected) <| fun _ ->
+                      let res = matchElements [] ruleStream [element]
+                      Expect.equal "What is this field for?" expected res))
+          testList "terminal AtLeast repetition parsing test"
+             ([
+                  (Repetition (AtLeast 1uy, Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabc"; Pos = 0 },(true, { Text = "abcabc"; Pos = 6 }))
+                  (Repetition (AtLeast 3uy, Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabcabcabc"; Pos = 0 },(true, { Text = "abcabcabcabc"; Pos = 12 }))
+                  (Repetition (AtLeast 3uy, Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabcabcabc!"; Pos = 0 },(true, { Text = "abcabcabcabc!"; Pos = 12 }))
+                  (Repetition (AtLeast 1uy, Terminals [ 'a'; 'b'; 'c' ]), { Text = "123abc"; Pos = 0 },(false, { Text = "123abc"; Pos = 0 }))
+                  (Repetition (AtLeast 1uy, Terminals [ 'a'; 'b'; 'c' ]), { Text = "!abc"; Pos = 1 },(true, { Text = "!abc"; Pos = 4 }))
+              ]
+              |> List.map (fun (element, ruleStream, expected) ->
+                  testCase (sprintf "terminal AtLeast repetition parsing test: %A" expected) <| fun _ ->
+                      let res = matchElements [] ruleStream [element]
+                      Expect.equal "What is this field for?" expected res))
+          testList "terminal AtMost repetition parsing test"
+             ([
+                  (Repetition (AtMost 1uy, Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabc"; Pos = 0 },(true, { Text = "abcabc"; Pos = 3 }))
+                  (Repetition (AtMost 4uy, Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabcabcabc"; Pos = 0 },(true, { Text = "abcabcabcabc"; Pos = 12 }))
+                  (Repetition (AtMost 4uy, Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabcabcabc!"; Pos = 0 },(true, { Text = "abcabcabcabc!"; Pos = 12 }))
+                  (Repetition (AtMost 1uy, Terminals [ 'a'; 'b'; 'c' ]), { Text = "123abc"; Pos = 0 },(true, { Text = "123abc"; Pos = 0 }))
+                  (Repetition (AtMost 1uy, Terminals [ 'a'; 'b'; 'c' ]), { Text = "!abc"; Pos = 1 },(true, { Text = "!abc"; Pos = 4 }))
+              ]
+              |> List.map (fun (element, ruleStream, expected) ->
+                  testCase (sprintf "terminal AtMost repetition parsing test: %A" expected) <| fun _ ->
+                      let res = matchElements [] ruleStream [element]
+                      Expect.equal "What is this field for?" expected res))
+          testList "terminal Exactly repetition parsing test"
+             ([
+                  (Repetition (Exactly 1uy, Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabc"; Pos = 0 },(true, { Text = "abcabc"; Pos = 3 }))
+                  (Repetition (Exactly 4uy, Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabcabcabc"; Pos = 0 },(true, { Text = "abcabcabcabc"; Pos = 12 }))
+                  (Repetition (Exactly 4uy, Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabcabc"; Pos = 0 },(false, { Text = "abcabcabc"; Pos = 0 }))
+                  (Repetition (Exactly 4uy, Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabcabcabc!"; Pos = 0 },(true, { Text = "abcabcabcabc!"; Pos = 12 }))
+                  (Repetition (Exactly 1uy, Terminals [ 'a'; 'b'; 'c' ]), { Text = "123abc"; Pos = 0 },(false, { Text = "123abc"; Pos = 0 }))
+                  (Repetition (Exactly 1uy, Terminals [ 'a'; 'b'; 'c' ]), { Text = "!abc"; Pos = 1 },(true, { Text = "!abc"; Pos = 4 }))
+              ]
+              |> List.map (fun (element, ruleStream, expected) ->
+                  testCase (sprintf "terminal Exactly repetition parsing test: %A" expected) <| fun _ ->
+                      let res = matchElements [] ruleStream [element]
+                      Expect.equal "What is this field for?" expected res))
+          testList "terminal Between repetition parsing test"
+             ([
+                  (Repetition (Between(1uy, 7uy), Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabc"; Pos = 0 },(true, { Text = "abcabc"; Pos = 6 }))
+                  (Repetition (Between(4uy, 7uy), Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabcabcabc"; Pos = 0 },(true, { Text = "abcabcabcabc"; Pos = 12 }))
+                  (Repetition (Between(4uy, 7uy), Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabcabc"; Pos = 0 },(false, { Text = "abcabcabc"; Pos = 0 }))
+                  (Repetition (Between(4uy, 7uy), Terminals [ 'a'; 'b'; 'c' ]), { Text = "abcabcabcabc!"; Pos = 0 },(true, { Text = "abcabcabcabc!"; Pos = 12 }))
+                  (Repetition (Between(1uy, 7uy), Terminals [ 'a'; 'b'; 'c' ]), { Text = "123abc"; Pos = 0 },(false, { Text = "123abc"; Pos = 0 }))
+                  (Repetition (Between(1uy, 7uy), Terminals [ 'a'; 'b'; 'c' ]), { Text = "!abc"; Pos = 1 },(true, { Text = "!abc"; Pos = 4 }))
+              ]
+              |> List.map (fun (element, ruleStream, expected) ->
+                  testCase (sprintf "terminal Between repetition parsing test: %A" expected) <| fun _ ->
+                      let res = matchElements [] ruleStream [element]
+                      Expect.equal "What is this field for?" expected res))
+        ]
     ]
