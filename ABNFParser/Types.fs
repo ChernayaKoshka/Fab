@@ -12,7 +12,6 @@ type Range =
     | Exactly of uint8
     | Between of (uint8 * uint8)
 
-
 type RuleElement =
     | Terminals        of Terminal list   // %x20, %x20.21, %x20-21
     | Alternatives     of RuleElement list    // %x20 / %x21
@@ -32,10 +31,17 @@ type AST =
     | Rule of ABNFRule
     | Element of RuleElement
 
+type Peek =
+    | Next of char
+    | EOF
+
 type RuleStream =
     {
         Text : string
         Pos  : int
     }
     member this.Peek() =
-        this.Text.[this.Pos]
+        if this.Pos < this.Text.Length then
+            Next this.Text.[this.Pos]
+        else
+            EOF
