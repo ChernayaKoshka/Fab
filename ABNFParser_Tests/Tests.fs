@@ -727,7 +727,7 @@ let rules =
 
 [<Tests>]
 let execution =
-    testList "rule execution tests" [
+    testList "rule element execution tests" [
         testList "terminal execution test"
            ([
                 (Terminals [ 'a'; 'b'; 'c' ], { Text = "abc"; Pos = 0 },(true, { Text = "abc"; Pos = 3 }))
@@ -856,6 +856,34 @@ let execution =
             ]
             |> List.map (fun (element, ruleStream, expected) ->
                 testCase (sprintf "optional sequence execution test: %A" expected) <| fun _ ->
+                    let res = matchElements [] ruleStream [element]
+                    Expect.equal "What is this field for?" expected res))
+
+        testList "alternatives execution test"
+           ([
+                (Alternatives[
+                        Terminals [ 'a'; 'b'; 'c' ]
+                        Terminals [ '1'; '2'; '3' ]
+                        ], { Text = "abcabc123"; Pos = 0 },(true, { Text = "abcabc123"; Pos = 3 }))
+                (Alternatives[
+                        Terminals [ '1'; '2'; '3' ]
+                        Terminals [ 'a'; 'b'; 'c' ]
+                        ], { Text = "abcabc123"; Pos = 0 },(true, { Text = "abcabc123"; Pos = 3 }))
+                (Alternatives[
+                        Terminals [ '1'; '2'; '3' ]
+                        Terminals [ 'a'; 'b'; 'c' ]
+                        ], { Text = "123abcabc123"; Pos = 0 },(true, { Text = "123abcabc123"; Pos = 3 }))
+                (Alternatives[
+                        Terminals [ '1'; '2'; '3' ]
+                        Repetition (Between(1uy, 2uy), Terminals [ 'a'; 'b'; 'c' ])
+                        ], { Text = "abcabc123"; Pos = 0 },(true, { Text = "abcabc123"; Pos = 6 }))
+                (Alternatives[
+                        Terminals [ '1'; '2'; '3' ]
+                        Repetition (Between(1uy, 2uy), Terminals [ 'a'; 'b'; 'c' ])
+                        ], { Text = "123abcabc123"; Pos = 0 },(true, { Text = "123abcabc123"; Pos = 3 }))
+            ]
+            |> List.map (fun (element, ruleStream, expected) ->
+                testCase (sprintf "optional sequence execution test: %A|%A" expected element) <| fun _ ->
                     let res = matchElements [] ruleStream [element]
                     Expect.equal "What is this field for?" expected res))
     ]
