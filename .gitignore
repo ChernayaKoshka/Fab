@@ -391,5 +391,8 @@ paket-files/
 # JetBrains Rider
 .idea/
 *.sln.iml
+
+# Manual Adds
 references.fsx
 test.fsx
+.ionide/symbolCache.db
