@@ -13,7 +13,6 @@ let findRule (rules : ABNFRule list) name =
         rule.RuleName = name)
 
 let rec matchElements (rules : ABNFRule list) (str : RuleStream) (elements : RuleElement list) =
-
     let rec matchElement (str : RuleStream) (element : RuleElement) =
         match element with
         | Terminals        terminals ->
@@ -24,15 +23,19 @@ let rec matchElements (rules : ABNFRule list) (str : RuleStream) (elements : Rul
                 else
                     (false, rs)) (true, str)
         | Alternatives     elements ->
-            (true, str)
+            elements
+            |> List.pick (fun e ->
+                let result = matchElement str e
+                if fst result then
+                    Some result
+                else
+                    None)
         | OptionalSequence element ->
             let result = matchElement str element
             if fst result then
                 result
             else
                 (true, str)
-        | Group            elements ->
-            (true, str)
         | Sequence         elements ->
             elements
             |> List.fold (fun (isMatch, stream) element ->
@@ -47,11 +50,11 @@ let rec matchElements (rules : ABNFRule list) (str : RuleStream) (elements : Rul
             match range with
             | Any ->
                 while fst temp do
-                    temp <- matchElements rules (snd temp) [element]
+                    temp <- matchElement (snd temp) element
                 (true, snd temp)
             | AtLeast (atLeast) ->
                 while fst temp do
-                    temp <- matchElements rules (snd temp) [element]
+                    temp <- matchElement (snd temp) element
                     if fst temp then
                         count <- count + 1uy
                 if count >= atLeast then
@@ -60,7 +63,7 @@ let rec matchElements (rules : ABNFRule list) (str : RuleStream) (elements : Rul
                     (false, str)
             | AtMost (atMost) ->
                 while fst temp && count + 1uy <= atMost do
-                    temp <- matchElements rules (snd temp) [element]
+                    temp <- matchElement (snd temp) element
                     if fst temp then
                         count <- count + 1uy
                 if count <= atMost then
@@ -70,7 +73,7 @@ let rec matchElements (rules : ABNFRule list) (str : RuleStream) (elements : Rul
             | Exactly (exactly) ->
                 let mutable shortCircuit = false
                 while fst temp && not shortCircuit do
-                    temp <- matchElements rules (snd temp) [element]
+                    temp <- matchElement (snd temp) element
                     if fst temp then
                         count <- count + 1uy
                         if count = exactly then
@@ -82,7 +85,7 @@ let rec matchElements (rules : ABNFRule list) (str : RuleStream) (elements : Rul
             | Between (min, max) ->
                 let mutable shortCircuit = false
                 while fst temp && not shortCircuit do
-                    temp <- matchElements rules (snd temp) [element]
+                    temp <- matchElement (snd temp) element
                     if fst temp then
                         count <- count + 1uy
                         if count = max then
@@ -92,8 +95,18 @@ let rec matchElements (rules : ABNFRule list) (str : RuleStream) (elements : Rul
                 else
                     (false, str)
         | RuleReference    string ->
-            (true, str)
-    matchElement str elements.[0]
+            let rule =
+                rules
+                |> List.find (fun rule ->
+                    rule.RuleName.ToUpper() = string.ToUpper())
+            matchElements rules str rule.Definition
+
+    elements
+    |> List.fold (fun (success, rs) element ->
+        if success then
+            matchElement rs element
+        else
+            (success, rs)) (true, str)
 
 //let process (rules : ABNFRule list) (rulename : string) (text : string) =
 //    let startingRule = findRule rules rulename
