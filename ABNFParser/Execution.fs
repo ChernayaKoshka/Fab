@@ -14,7 +14,6 @@ let findRule (rules : ABNFRule list) name =
 
 let rec matchElements (rules : ABNFRule list) (str : RuleStream) (elements : RuleElement list) =
     let rec matchElement (str : RuleStream) (element : RuleElement) =
-        //printfn "Matching %s!" (element.ToString())
         match element with
         | Terminals        terminals ->
             terminals
@@ -27,7 +26,6 @@ let rec matchElements (rules : ABNFRule list) (str : RuleStream) (elements : Rul
             let result =
                 elements
                 |> List.tryPick (fun e ->
-                    //printfn "%A | %A" e str
                     let result = matchElement str e
                     if fst result then
                         Some result
@@ -105,7 +103,6 @@ let rec matchElements (rules : ABNFRule list) (str : RuleStream) (elements : Rul
                 rules
                 |> List.find (fun rule ->
                     rule.RuleName.ToUpper() = string.ToUpper())
-            printfn "Executing rule: %s" rule.RuleName
             matchElements rules str rule.Definition
 
     elements
