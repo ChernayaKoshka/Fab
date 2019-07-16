@@ -5,7 +5,7 @@ open System
 
 [<EntryPoint>]
 let main argv =
-    let res = Tests.runTestsInAssembly defaultConfig argv
+    let res = runTestsInAssembly defaultConfig argv
     if res <> 0 then
         Console.ReadLine()
         |> ignore
