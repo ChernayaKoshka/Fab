@@ -385,6 +385,7 @@ let rules =
                 (@"street-name      = 1*VCHAR", ("street-name",
                     [Repetition
                        (AtLeast 1uy,
+
                         Alternatives
                           [Terminals ['!']; Terminals ['"']; Terminals ['#']; Terminals ['$'];
                            Terminals ['%']; Terminals ['&']; Terminals ['\'']; Terminals ['('];
@@ -886,4 +887,41 @@ let execution =
                 testCase (sprintf "optional sequence execution test: %A|%A" expected element) <| fun _ ->
                     let res = matchElements [] ruleStream [element]
                     Expect.equal "What is this field for?" expected res))
+    ]
+
+[<Tests>]
+let ruleProcessing =
+    testList "ruleset processing" [
+        testList "single rule parsing tests (zipcode)"(
+            [
+                @"12345"
+                @"12345-6789"
+            ]
+            |> List.map (fun str ->
+                testCase str <| fun _ ->
+                    let parser =
+                        run pRuleRecord "zip-code         = 5DIGIT [\"-\" 4DIGIT]"
+                        |> unwrap
+                    let (result, remaining) = matchElements [] { Text = str; Pos = 0 } parser.Definition
+                    Expect.isTrue "What's this field for?" result))
+        testList "ruleset execution tests" [
+            testCase "Simple ruleset parsing test" <| fun _ ->
+                let testStr =
+                    """
+                    zip-part         = town-name "," SP state 1*2SP zip-code CRLF
+                    town-name        = 1*(ALPHA / SP)
+                    state            = 2ALPHA
+                    zip-code         = 5DIGIT ["-" 4DIGIT]
+                    """.Trim()
+                let rules =
+                    testStr
+                    |> parseAllRules
+                    |> unwrap
+                printfn "%A" rules
+                let test = "Test Town, AL 99210\r\n"
+                let (executionResult, remaining) = matchElements rules { Text = test; Pos = 0 } (findRule rules "zip-part").Definition
+                printfn "%A" (executionResult, remaining)
+                Expect.isTrue "What is this field for?" executionResult
+        ]
+
     ]
