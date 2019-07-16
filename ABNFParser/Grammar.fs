@@ -127,7 +127,7 @@ let pCoreRule : Parser<_> =
             stringReturn "LF"     (Terminals [LF])
             stringReturn "BIT"    (Alternatives (terminals BIT))
         ]
-    .>> followedBy (skipAnyOf ([ '['; ']'; '('; ')'; ' '; ';']) <|> eof)
+    .>> followedBy (skipAnyOf ([ '['; ']'; '('; ')'; ' '; ';']) <|> eof <|> skipNewline)
     <!> "pCoreRule"
 
 let (pRuleElement, pRuleElementRef) : (Parser<RuleElement> * Parser<RuleElement> ref) = createParserForwardedToRef()
@@ -253,4 +253,5 @@ let pRuleRecord : Parser<_> =
     |>> (fun (name, elements) -> { RuleName = name; Definition = elements })
 
 let pDocument : Parser<_> =
-    many1 (pRuleRecord .>> pWhitespace .>> (skipMany1 skipNewline <|> eof))
+    many1Till (pRuleRecord .>> (many (newline <|> pSpace))) eof
+    <!> "pDocument"
