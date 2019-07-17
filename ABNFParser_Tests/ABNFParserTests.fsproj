@@ -16,6 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec" />
+    <Reference Include="FSharp.Data" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

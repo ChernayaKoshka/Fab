@@ -889,23 +889,46 @@ let execution =
                     Expect.equal "What is this field for?" expected res))
     ]
 
+open FSharp.Data
+open System.IO
+open System.Net
+
+type ZIPCodeList = CsvProvider< @"..\Samples\free-zipcode-database-Primary.csv", Schema="Zipcode=string" >
+
+let zipcodeRows =
+    ZIPCodeList.GetSample().Rows
+
+let zipcodes =
+    zipcodeRows
+    |> Seq.map (fun row -> row.Zipcode)
+    |> List.ofSeq
+
+let zipparts =
+    zipcodeRows
+    |> Seq.filter (fun row ->
+        row.ZipCodeType.ToUpper() <> "MILITARY" &&
+        not <| row.City.Contains("-") &&
+        not <| row.City.Contains("/"))
+    |> Seq.map (fun row ->
+        sprintf "%s, %s %s\r\n" row.City row.State row.Zipcode)
+    |> List.ofSeq
+
 [<Tests>]
 let ruleProcessing =
+
     testList "ruleset processing" [
         testList "single rule parsing tests (zipcode)"(
-            [
-                @"12345"
-                @"12345-6789"
-            ]
-            |> List.map (fun str ->
-                testCase str <| fun _ ->
+            "12345-6789" :: zipcodes
+            |> List.map (fun input ->
+                testCase input <| fun _ ->
                     let parser =
                         run pRuleRecord "zip-code         = 5DIGIT [\"-\" 4DIGIT]"
                         |> unwrap
-                    let (result, remaining) = matchElements [] { Text = str; Pos = 0 } parser.Definition
-                    Expect.isTrue "What's this field for?" result))
+                    let (result, actual) = matchElements [] { Text = input; Pos = 0 } parser.Definition
+                    Expect.isTrue "What's this field for?" result
+                    Expect.equal "What is this field for?" { Text = input; Pos = input.Length } actual ))
         testList "ruleset execution tests" [
-            testCase "Simple ruleset parsing test" <| fun _ ->
+            testList "Simple ruleset parsing test" (
                 let testStr =
                     """
                     zip-part         = town-name "," SP state 1*2SP zip-code CRLF
@@ -917,11 +940,15 @@ let ruleProcessing =
                     testStr
                     |> parseAllRules
                     |> unwrap
+                let startDefintion = (findRule rules "zip-part").Definition
                 printfn "%A" rules
-                let test = "Test Town, AL 99210\r\n"
-                let (executionResult, remaining) = matchElements rules { Text = test; Pos = 0 } (findRule rules "zip-part").Definition
-                printfn "%A" (executionResult, remaining)
-                Expect.isTrue "What is this field for?" executionResult
+                "Test Town, AL 99210\r\n" :: zipparts
+                |> List.map (fun input ->
+                    testCase input  <| fun _ ->
+                        let (executionResult, remaining) = matchElements rules { Text = input; Pos = 0 } startDefintion
+                        Expect.isTrue "What is this field for?" executionResult
+                        Expect.equal "What is this field for?" { Text = input; Pos = input.Length } remaining)
+            )
         ]
 
     ]
