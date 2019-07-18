@@ -854,6 +854,11 @@ let execution =
                         Repetition (Exactly 4uy, Terminals [ 'a'; 'b'; 'c' ]);
                         Terminals [ '1'; '2'; '3' ]
                         ]), { Text = "123abcabc123"; Pos = 0 },(true, { Text = "123abcabc123"; Pos = 0 }))
+                (Sequence [
+                        OptionalSequence (
+                                Sequence [
+                                        Terminals [ '1'; '2'; '3' ] ]);
+                        Terminals[ '1' ] ], { Text = "1"; Pos = 0 },(true, { Text = "1"; Pos = 1 }))
             ]
             |> List.map (fun (element, ruleStream, expected) ->
                 testCase (sprintf "optional sequence execution test: %A" expected) <| fun _ ->
@@ -890,9 +895,6 @@ let execution =
     ]
 
 open FSharp.Data
-open System.IO
-open System.Net
-
 type ZIPCodeList = CsvProvider< @"..\Samples\free-zipcode-database-Primary.csv", Schema="Zipcode=string" >
 
 let zipcodeRows =
@@ -913,6 +915,40 @@ let zipparts =
         sprintf "%s, %s %s\r\n" row.City row.State row.Zipcode)
     |> List.ofSeq
 
+(*
+    Retrieved From https://catalog.data.gov/dataset/addresses
+    Resource Type Dataset
+    Metadata Created Date February 10, 2017
+    Metadata Updated Date April 5, 2019
+    Publisher City of Chesapeake, VA
+    Unique Identifier http://public-chesva.opendata.arcgis.com/datasets/b469c77f314242a0a602075e936d2ea7_18
+    Maintainer Virginia Fowler
+    Maintainer Email gisteam@cityofchesapeake.net
+    License https://hub.arcgis.com/api/v2/datasets/b469c77f314242a0a602075e936d2ea7_18/license
+*)
+type AddressList = CsvProvider< @"..\Samples\Addresses.csv", InferRows = 0, IgnoreErrors = true >
+
+let addressRows = AddressList.GetSample().Rows
+
+open System.Text.RegularExpressions
+let streets =
+    addressRows
+    |> Seq.filter (fun row ->
+        // some addresses appear to be missing house number.
+        // The postal address parser from https://en.wikipedia.org/wiki/Augmented_Backus%E2%80%93Naur_form isn't exactly bulletproof
+        // so we'll give it a little help
+        Regex.IsMatch(row.ADDRESS, "^\d"))
+    |> Seq.map (fun row ->
+        if row.USE_ = "Apartments" then
+            if Regex.IsMatch(row.UNITS, "^\d+$") then
+                sprintf "%s %s\r\n" row.UNITS row.ADDRESS
+            else
+                row.ADDRESS + "\r\n"
+        else
+            row.ADDRESS + "\r\n")
+    |> Seq.distinct
+    |> List.ofSeq
+
 [<Tests>]
 let ruleProcessing =
 
@@ -928,7 +964,29 @@ let ruleProcessing =
                     Expect.isTrue "What's this field for?" result
                     Expect.equal "What is this field for?" { Text = input; Pos = input.Length } actual ))
         testList "ruleset execution tests" [
-            testList "Simple ruleset parsing test" (
+            testList "Simple ruleset parsing test street" (
+                let testStr =
+                    """
+                    street           = [apt SP] house-num SP street-name CRLF
+                    apt              = 1*4DIGIT
+                    house-num        = 1*8(DIGIT / ALPHA)
+                    street-name      = 1*(VCHAR / SP)
+                    """.Trim()
+                let rules =
+                    testStr
+                    |> parseAllRules
+                    |> unwrap
+                let startDefintion = (findRule rules "street").Definition
+                printfn "%A" rules
+                ["123 Main St\r\n"] //:: streets
+                |> List.map (fun input ->
+                    testCase input  <| fun _ ->
+                        let (executionResult, remaining) = matchElements rules { Text = input; Pos = 0 } startDefintion
+                        printfn "%A" (executionResult, remaining)
+                        Expect.isTrue "What is this field for?" executionResult
+                        Expect.equal "What is this field for?" { Text = input; Pos = input.Length } remaining)
+            )
+            testList "Simple ruleset parsing test zip-part" (
                 let testStr =
                     """
                     zip-part         = town-name "," SP state 1*2SP zip-code CRLF
@@ -941,7 +999,7 @@ let ruleProcessing =
                     |> parseAllRules
                     |> unwrap
                 let startDefintion = (findRule rules "zip-part").Definition
-                printfn "%A" rules
+                //printfn "%A" rules
                 "Test Town, AL 99210\r\n" :: zipparts
                 |> List.map (fun input ->
                     testCase input  <| fun _ ->
