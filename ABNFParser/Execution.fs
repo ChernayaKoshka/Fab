@@ -105,12 +105,34 @@ let rec matchElements (rules : ABNFRule list) (str : RuleStream) (elements : Rul
                     rule.RuleName.ToUpper() = string.ToUpper())
             matchElements rules str rule.Definition
 
-    elements
-    |> List.fold (fun (success, rs) element ->
-        if success then
-            matchElement rs element
-        else
-            (success, rs)) (true, str)
+    let success, _, _, rs =
+        elements
+        |> List.fold (fun (success, index, doneParsing, rs) element ->
+            if success && not doneParsing then
+                let (result, doneParsing, rs') =
+                    match element with
+                    | OptionalSequence _ ->
+                        //skip optional element and see how that pans out for us
+                        let success',  rs' =
+                            if index + 1 < elements.Length then
+                                matchElements rules rs elements.[index + 1..]
+                            else
+                                (false, rs)
+                        let success'', rs'' = matchElement rs element
+                        match success', success'' with
+                        | true,  true when rs'.Pos >= rs''.Pos -> (success'  , true,  rs'  )
+                        | true,  true when rs''.Pos >= rs'.Pos -> (success'' , false, rs'' )
+                        | true,  true  -> failwith "Impossible, just putting here to keep the compiler from bitching"
+                        | false, true  -> (success'', false, rs'')
+                        | true , false -> (success' , true,  rs' )
+                        | false, false -> (success'', false, rs'')
+                    | _ ->
+                        let result, rs' = matchElement rs element
+                        (result, false, rs')
+                (result, index + 1, doneParsing, rs')
+            else
+                (success, index, doneParsing, rs)) (true, 0, false, str)
+    (success, rs)
 
 //let process (rules : ABNFRule list) (rulename : string) (text : string) =
 //    let startingRule = findRule rules rulename
