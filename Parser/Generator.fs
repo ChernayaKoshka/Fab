@@ -28,6 +28,7 @@ let findRule (rules : Rule list) name =
 let validGroupNameCharacters = ['A'..'Z'] @ ['a'..'z'] @ [ '_' ]
 
 let concatRules = String.concat ""
+let concatAlternates = String.concat "|" >> sprintf "(?:%s)"
 
 let rec generate (rules : Rule list) =
     let rec generateNext (element : RuleElement) : string =
@@ -48,8 +49,7 @@ let rec generate (rules : Rule list) =
             else
                 elements
                 |> List.map generateNext
-                |> String.concat "|"
-                |> sprintf "(?:%s)"
+                |> concatAlternates
         | OptionalSequence element ->
             element
             |> generateNext
@@ -86,4 +86,8 @@ let rec generate (rules : Rule list) =
     rules
     |> List.rev // makes it easier to ignore rule definition order
     |> List.map (fun rule -> rule.RuleName, rule.Definition |> List.map generateNext |> concatRules)
+    // handling duplicate rules / alternate rule cases
+    |> List.groupBy fst
+    |> List.map (fun (name, rules) ->
+        (name, rules |> List.map snd |> concatAlternates))
     |> Map.ofList
