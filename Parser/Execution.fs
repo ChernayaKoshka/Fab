@@ -5,9 +5,12 @@ let parseAllRules (text : string) =
     runParserOnString pDocument [ ] "" text
 
 let findRule (rules : Rule list) name =
+    let concatenatedRules =
     rules
-    |> List.find (fun (rule : Rule) ->
+        |> List.filter (fun (rule : Rule) ->
         rule.RuleName = name)
+        |> List.collect (fun rule -> rule.Definition)
+    { RuleName = name; Definition = concatenatedRules }
 
 let rec matchElements (rules : Rule list) (str : RuleStream) (elements : RuleElement list) =
     let rec matchElement (str : RuleStream) (element : RuleElement) =
