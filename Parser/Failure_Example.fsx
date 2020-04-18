@@ -14,20 +14,13 @@ let unwrap parseResult =
 
 let testStr =
     """
-    name-part        = *(personal-part SP) last-name [SP suffix] CRLF
-    name-part        =/ personal-part CRLF
-
-    personal-part    = first-name / (initial ".")
-    first-name       = *ALPHA
-    initial          = ALPHA
-    last-name        = *ALPHA
-    suffix           = ("Jr." / "Sr." / 1*("I" / "V" / "X"))
+    test = *(ALPHA) ALPHA
     """.Trim()
 let rules =
     testStr
     |> parseAllRules
     |> unwrap
-let startDefintion = (findRule rules "name-part").Definition
+let startDefintion = (findRule rules "test").Definition
 
-let input = "Someone Old Sr.\r\n"
+let input = "ABC"
 let (executionResult, remaining) = matchElements rules { Text = input; Pos = 0 } startDefintion
