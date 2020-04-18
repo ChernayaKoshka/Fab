@@ -11,6 +11,7 @@
     <Compile Include="Core Rules.fs" />
     <Compile Include="Grammar.fs" />
     <Compile Include="Execution.fs" />
+    <Compile Include="Generator.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FParsec" Version="1.1.1" />
