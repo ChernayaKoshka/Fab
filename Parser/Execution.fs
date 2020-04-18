@@ -5,15 +5,29 @@ let parseAllRules (text : string) =
     runParserOnString pDocument [ ] "" text
 
 let findRule (rules : Rule list) name =
-    let concatenatedRules =
-    rules
+    let definitions =
+        rules
         |> List.filter (fun (rule : Rule) ->
-        rule.RuleName = name)
-        |> List.collect (fun rule -> rule.Definition)
+            rule.RuleName = name)
+    let concatenatedRules =
+        match definitions with
+        | [ definition ] -> 
+            definition.Definition
+        | _ ->
+            definitions
+            |> List.map (fun rule -> Sequence rule.Definition)
+            |> Alternatives
+            |> List.singleton
+
     { RuleName = name; Definition = concatenatedRules }
 
 let rec matchElements (rules : Rule list) (str : RuleStream) (elements : RuleElement list) =
     let rec matchElement (str : RuleStream) (element : RuleElement) =
+        printfn "%s" (str.Text.Replace("\r", "\\r").Replace("\n", "\\n"))
+        for z = 0 to str.Pos - 1 do
+            printf "-"
+        printfn "^"
+        printfn "%s\r\n" (element.ToString())
         match element with
         | Terminals        terminals ->
             terminals
@@ -108,11 +122,6 @@ let rec matchElements (rules : Rule list) (str : RuleStream) (elements : RuleEle
     let success, _, _, rs =
         elements
         |> List.fold (fun (success, index, doneParsing, rs) element ->
-            // printfn "%s" (rs.Text.Replace("\r", "\\r").Replace("\n", "\\n"))
-            // for z = 0 to index - 2 do
-            //     printf "-"
-            // printfn "^"
-            // printfn "%s\r\n" (element.ToString())
             if success && not doneParsing then
                 let (result, doneParsing, rs') =
                     match element with
