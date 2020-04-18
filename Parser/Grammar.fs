@@ -1,6 +1,5 @@
 [<AutoOpen>]
-module ABNF.Grammar
-open ABNF
+module Grammar
 open FParsec
 open System
 
@@ -278,3 +277,6 @@ let pRuleRecord : Parser<_> =
 let pDocument : Parser<_> =
     many1Till (pRuleRecord .>> (many (newline <|> pSpace))) eof
     <!> "pDocument"
+
+let parseAllRules (text : string) =
+    runParserOnString pDocument [ ] "" text
