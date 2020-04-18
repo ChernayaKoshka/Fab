@@ -1,0 +1,156 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<metadata>
+    <idinfo>
+        <citation>
+            <citeinfo>
+                <origin>Utah Automated Geographic Reference Center (AGRC)</origin>
+                <pubdate>20170327</pubdate>
+                <title>Zip Codes</title>
+                <onlink>https://gis.utah.gov/data/boundaries</onlink>
+            </citeinfo>
+        </citation>
+        <descript>
+            <abstract>This dataset represents an ongoing effort to approximate the geographic extents of 5 digit zip codes. The dataset was produced using a combination of methods and is based on several sets of source data. Methods include: 1) using local zip code polygon data obtained from counties and cities contained within these counties; 2 ) examining the 2000 Census TIGER line file's zip code attributes;  and 3) using AGRC address grid quadrant boundaries to assign the zip code to segments within a boundary corresponding to a place location (city, town, places) from the postal service website and address information system (AIS).  In addition, AGRC has used the locations of mailing addresses known to have valid zip codes to fine tune this dataset.</abstract>
+            <purpose>This data was developed to assist in assigning a 5 digit zip code to each street segment and address point in the Utah statewide data set.
+
+
+The assigned zip codes are used to:
+
+
+Determine the location to be used for geocoding addresses
+
+
+Automate the development of data that needs to be aggregated by zip code
+
+
+This data should not be used to determine the definitive zip code for addressing mail that will be sent through the US Postal Service.  The USPS web site or other official data should be used for this purpose.</purpose>
+        </descript>
+        <timeperd>
+            <timeinfo>
+                <sngdate>
+                    <caldate>2017</caldate>
+                </sngdate>
+            </timeinfo>
+            <current />
+        </timeperd>
+        <status>
+            <progress>Complete</progress>
+            <update>As needed</update>
+        </status>
+        <spdom>
+            <bounding>
+                <westbc>-114.276422</westbc>
+                <eastbc>-108.899272</eastbc>
+                <northbc>42.034241</northbc>
+                <southbc>36.959971</southbc>
+            </bounding>
+        </spdom>
+        <keywords>
+            <theme>
+                <themekt>None</themekt>
+                <themekey>Zip Code</themekey>
+                <themekey>Zip5</themekey>
+                <themekey>Utah</themekey>
+                <themekey>USPS</themekey>
+                <themekey>Zone</themekey>
+                <themekey>Mail</themekey>
+                <themekey>Geocode</themekey>
+            </theme>
+            <place>
+                <placekt />
+                <placekey>Utah</placekey>
+            </place>
+        </keywords>
+        <accconst>None</accconst>
+        <useconst>The Utah Automated Geographic Reference Center has adopted the following spatial data disclaimer to be explicitedly included or referenced in all geospatial data, mapping products, and services created or hosted at AGRC including the contents of State Geographic Information Database (SGID). 'This product is for informational purposes and may not have been prepared for, or be suitable for legal, engineering, or surveying purposes. Users of this information should review or consult the primary data and information sources to ascertain the usability of the information. AGRC provides these data in good faith and shall in no event be liable for any incorrect results, any lost profits and special, indirect or consequential damages to any party, arising out of or in connection with the use or the inability to use the data hereon or the services provided. AGRC shall not be held liable for any third party's interpretation of data provided by AGRC. AGRC provides these data and services as a convenience to the public. Furthermore, AGRC reserves the right to change or revise published data and/or these services at any time.' Furthermore, it is the official policy of the AGRC: - that the adopted disclaimer be used on all hard copy maps produced from geospatial data, and that the date and source of the data be included on the map; - that spatial data producers be allowed to extend the adopted disclaimer with additional language further defining the limits of their liability; - that a more robust disclaimer may be used in conjunction with any and all geospatial data published on the Internet, on a separate page preceding access to the data, with an accept/reject option for users; - that standardized metadata be included with any distribution of all geospatial data; and - that the disclaimer above may be used as a blanket disclaimer for documents containing a number of small maps.</useconst>
+        <ptcontac>
+            <cntinfo>
+                <cntorgp>
+                    <cntorg>Utah AGRC</cntorg>
+                    <cntper />
+                </cntorgp>
+                <cntpos />
+                <cntaddr>
+                    <addrtype>mailing and physical address</addrtype>
+                    <address>Utah Automated Geographic Reference 1 State Office Building, Room 5130</address>
+                    <city>Salt Lake City</city>
+                    <state>UT</state>
+                    <postal>84114</postal>
+                </cntaddr>
+                <cntvoice>801-538-3665</cntvoice>
+            </cntinfo>
+        </ptcontac>
+    </idinfo>
+    <distinfo>
+        <distrib>
+            <cntinfo>
+                <cntorgp>
+                    <cntorg>Utah AGRC</cntorg>
+                    <cntper />
+                </cntorgp>
+                <cntpos />
+                <cntaddr>
+                    <addrtype>mailing and physical address</addrtype>
+                    <address>Utah Automated Geographic Reference 1 State Office Building, Room 5130</address>
+                    <city>Salt Lake City</city>
+                    <state>UT</state>
+                    <postal>84114</postal>
+                </cntaddr>
+                <cntvoice>801-538-3665</cntvoice>
+            </cntinfo>
+        </distrib>
+        <distliab />
+        <stdorder>
+            <digform>
+    <digtinfo>
+        <formname>Downloadable File Geodatabase</formname>
+    </digtinfo>
+    <digtopt>
+        <onlinopt>
+            <computer>
+                <networka>
+                    <networkr>https://drive.google.com/a/utah.gov/uc?id=0ByStJjVZ7c7mQTZ1bEU4aDM2eG8&amp;export=download</networkr>
+                </networka>
+            </computer>
+        </onlinopt>
+    </digtopt>
+</digform><digform>
+    <digtinfo>
+        <formname>Downloadable Shapefile</formname>
+    </digtinfo>
+    <digtopt>
+        <onlinopt>
+            <computer>
+                <networka>
+                    <networkr>https://drive.google.com/a/utah.gov/uc?id=0ByStJjVZ7c7mTzlIVFduaTBucWs&amp;export=download</networkr>
+                </networka>
+            </computer>
+        </onlinopt>
+    </digtopt>
+</digform><fees />
+        </stdorder>
+    </distinfo>
+    <metainfo>
+        <metd />
+        <metrd />
+        <metc>
+            <cntinfo>
+                <cntorgp>
+                    <cntorg>Utah AGRC</cntorg>
+                </cntorgp>
+                <cntaddr>
+                    <addrtype>mailing and physical address</addrtype>
+                    <address>Utah Automated Geographic Reference 1 State Office Building, Room 5130</address>
+                    <city>Salt Lake City</city>
+                    <state>UT</state>
+                    <postal>84114</postal>
+                    <country />
+                </cntaddr>
+                <cntvoice>801-538-3665</cntvoice>
+                <cntemail />
+            </cntinfo>
+        </metc>
+        <metstdn>FGDCContentStandardforDigitalGeospatialMetadata</metstdn>
+        <metstdv>FGDC-STD-001-1998</metstdv>
+    </metainfo>
+</metadata>
