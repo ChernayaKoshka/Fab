@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module ABNF.Types
+module Types
 
 open FParsec
 
