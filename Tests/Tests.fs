@@ -9,7 +9,10 @@ open Expecto.Flip
 
 let unwrap parseResult =
     match parseResult with
-    | Success(res, _, _) -> res
+    | Success(res, _, _) ->
+        res
+    | Failure (err, _, _) ->
+        failwithf "%A" err
 
 let run parser =
     runParserOnString parser [ ] ""
@@ -934,7 +937,6 @@ type AddressList = CsvProvider< @"..\Samples\Addresses.csv", InferRows = 0, Igno
 
 let addressRows = AddressList.GetSample().Rows
 
-open System.Text.RegularExpressions
 let streets =
     addressRows
     |> Seq.take 200
@@ -1017,7 +1019,6 @@ let simpleRuleParsing =
 
     ]
 
-(*
 [<Tests>]
 let test2 =
     testList "Simple ruleset parsing test zip-part" (
@@ -1037,8 +1038,6 @@ let test2 =
             |> parseAllRules
             |> unwrap
         let startDefintion = (findRule rules "name-part").Definition
-        printfn "%A" startDefintion
-        failwith "dead"
         //printfn "%A" rules
         [ "Someone Old Sr.\r\n" ]
         |> List.map (fun input ->
@@ -1086,4 +1085,3 @@ let complexRuleProcessing =
                 Expect.isTrue "What is this field for?" executionResult
                 Expect.equal "What is this field for?" { Text = input; Pos = input.Length } remaining)
     )
-*)
