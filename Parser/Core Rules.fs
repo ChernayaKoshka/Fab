@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module ABNF.CoreRules
+module CoreRules
 
 open FParsec
 
