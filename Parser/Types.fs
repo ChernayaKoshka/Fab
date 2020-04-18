@@ -25,9 +25,9 @@ type RuleElement =
         override this.ToString() =
             match this with
             | Terminals terms -> sprintf "Terminals [%d..%d]" (int terms.[terms.Length-1]) (int terms.[0])
-            | Alternatives elems -> sprintf "Alternatives: %s" ((sprintf "%A" elems).Replace("\r", "").Replace("\n", "  "))
-            | OptionalSequence elems -> sprintf "OptionalSequence: %s" ((sprintf "%A" elems).Replace("\r", "").Replace("\n", "  "))
-            | Sequence elems -> sprintf "Sequence: %s" ((sprintf "%A" elems).Replace("\r", "").Replace("\n", "  "))
+            | Alternatives elems -> sprintf "Alternatives: %s" ((sprintf "%O" elems).Replace("\r", "").Replace("\n", "  "))
+            | OptionalSequence elems -> sprintf "OptionalSequence: %s" ((sprintf "%O" elems).Replace("\r", "").Replace("\n", "  "))
+            | Sequence elems -> sprintf "Sequence: %s" ((sprintf "%O" elems).Replace("\r", "").Replace("\n", "  "))
             | Repetition (range, element) -> sprintf "Repetition [%A:%s]" range (element.ToString())
             | RuleReference refs -> sprintf "RuleReference [%s]" refs
 
