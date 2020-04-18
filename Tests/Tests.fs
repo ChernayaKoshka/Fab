@@ -2,8 +2,7 @@ module Tests
 
 open Expecto
 open Expecto.FParsec
-open ABNF
-open ABNF.Execution
+open Execution
 open FParsec
 open Expecto.Flip
 
@@ -909,6 +908,7 @@ let zipcodeRows =
 let zipcodes =
     zipcodeRows
     |> Seq.map (fun row -> row.Zipcode)
+    |> Seq.take 200
     |> List.ofSeq
 
 let zipparts =
@@ -1020,26 +1020,19 @@ let simpleRuleParsing =
     ]
 
 [<Tests>]
-let test2 =
-    testList "Simple ruleset parsing test zip-part" (
+let backtracking =
+    testList "Simply greedy backtracking" (
         let testStr =
             """
-            name-part        = *(personal-part SP) last-name [SP suffix] CRLF
-            name-part        =/ personal-part CRLF
-
-            personal-part    = first-name / (initial ".")
-            first-name       = *ALPHA
-            initial          = ALPHA
-            last-name        = *ALPHA
-            suffix           = ("Jr." / "Sr." / 1*("I" / "V" / "X"))
+            test = *(ALPHA) ALPHA
             """.Trim()
         let rules =
             testStr
             |> parseAllRules
             |> unwrap
-        let startDefintion = (findRule rules "name-part").Definition
+        let startDefintion = (findRule rules "test").Definition
         //printfn "%A" rules
-        [ "Someone Old Sr.\r\n" ]
+        [ "ABC" ]
         |> List.map (fun input ->
             testCase input  <| fun _ ->
                 let (executionResult, remaining) = matchElements rules { Text = input; Pos = 0 } startDefintion
