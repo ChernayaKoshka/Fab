@@ -13,7 +13,7 @@ let findRule (rules : Rule list) name =
 
     let concatenatedRules =
         match definitions with
-        | [ ] -> 
+        | [ ] ->
             failwithf "%s was not defined prior to this point!" name
         | [ definition ] ->
             definition.Definition
@@ -24,6 +24,8 @@ let findRule (rules : Rule list) name =
             |> List.singleton
 
     { RuleName = name; Definition = concatenatedRules }
+
+let validGroupNameCharacters = ['A'..'Z'] @ ['a'..'z'] @ [ '_' ]
 
 let concatRules = String.concat ""
 
@@ -59,21 +61,28 @@ let rec generate (rules : Rule list) =
             |> sprintf "(?:%s)"
         // I know, I know. Imperative BS. But, I'm lazy and it was easier this way ¯\_(ツ)_/¯
         | Repetition       (range, element) ->
-            let min, max =
+            let makeRange str =
                 match range with
-                | Any                -> (0uy    , Byte.MaxValue)
-                | AtLeast (atLeast)  -> (atLeast, Byte.MaxValue)
-                | AtMost (atMost)    -> (0uy    , atMost        )
-                | Exactly (exactly)  -> (exactly, exactly       )
-                | Between (min, max) -> (min    , max           )
+                | Any                -> sprintf "%s*" str
+                | AtLeast 1uy        -> sprintf "%s+" str
+                | AtLeast atLeast    -> sprintf "%s{%d,}" str atLeast
+                | AtMost atMost      -> sprintf "%s{,%d}" str atMost
+                | Exactly exactly    -> sprintf "%s{%d}" str exactly
+                | Between (min, max) -> sprintf "%s{%d,%d}" str min max
 
-            sprintf "%s{%d,%d}" (generateNext element) min max
+            element
+            |> generateNext
+            |> makeRange
         | RuleReference    name ->
+            let groupName =
+                name
+                |> String.map (fun c ->
+                    if validGroupNameCharacters |> List.contains c then c else '_')
             // would seriously benefit from memoization, but...
             (findRule rules name).Definition
             |> List.map generateNext
             |> concatRules
-            |> sprintf "(?:(?#%s)%s)" name
+            |> sprintf "(?'%s'%s)" groupName
     rules
     |> List.rev // makes it easier to ignore rule definition order
     |> List.map (fun rule -> rule.RuleName, rule.Definition |> List.map generateNext |> concatRules)
