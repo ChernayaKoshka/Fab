@@ -127,19 +127,9 @@ let pCoreRule : Parser<_> =
     .>>? notFollowedBy pRuleChar
     <!> "pCoreRule"
 
-let (pNotSequence, pNotSequenceRef) : (Parser<RuleElement> * Parser<RuleElement> ref) = createParserForwardedToRef()
-let pSequence : Parser<_> =
-    sepEndBy1 pNotSequence pSpace
-    |>> Sequence
-    <!> "pSequence"
 
 let pBetweenWhitespace openStr closeStr parser : Parser<_> =
     between (skipString openStr) (skipString closeStr) (skipWhitespace >>. parser .>> skipWhitespace)
-
-let pOptionalGroup : Parser<_> =
-    pBetweenWhitespace "[" "]" pSequence
-    |>> OptionalSequence
-    <!> "pOptionalGroup"
 
 let pAlternateSeparator : Parser<_> =
     skipWhitespace >>? skipChar '/' .>> skipWhitespace
@@ -152,6 +142,16 @@ let pAlternates : Parser<_> =
         | [ element ] -> element
         | alternatives -> Alternatives alternatives)
     <!> "pAlternates"
+    
+let pSequence : Parser<_> =
+    sepEndBy1 pAlternates pSpace
+    |>> Sequence
+    <!> "pSequence"
+    
+let pOptionalGroup : Parser<_> =
+    pBetweenWhitespace "[" "]" pSequence
+    |>> OptionalSequence
+    <!> "pOptionalGroup"
 
 let pSequenceGroup : Parser<_> =
     pBetweenWhitespace "(" ")" pSequence
@@ -190,30 +190,18 @@ do pNotAlternatesRef :=
     .>>.
         choice
             [
-                pSequenceGroup
-                pOptionalGroup
+                pString
                 pTerminals
                 pCoreRule
                 pRuleReference
-                pString
+                pOptionalGroup
+                pSequenceGroup
             ]
     |>> (fun (range, element) ->
         match range with
         | Some range -> Repetition(range, element)
         | None -> element)
     <!> "pNotAlternates"
-
-do pNotSequenceRef :=
-    choice
-        [
-            pSequenceGroup 
-            pOptionalGroup
-            pAlternates
-            pTerminals 
-            pCoreRule
-            pString
-        ]
-    <!> "pRuleElement"
 
 let addRule (definition : Rule) : Parser<_> =
     updateUserState (fun us -> definition.RuleName :: us)
