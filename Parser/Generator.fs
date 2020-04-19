@@ -35,6 +35,7 @@ let realRegexEscape str =
         .Replace("]", "\]")
         .Replace("}", "\}")
         .Replace("/", "\/")
+
 let rec generate (rules : Rule list) =
     let rec generateNext (element : RuleElement) : string =
         match element with
@@ -55,6 +56,24 @@ let rec generate (rules : Rule list) =
                 elements
                 |> List.map generateNext
                 |> concatAlternates
+        | CoreRule rule ->
+            match rule with
+            | ALPHA -> "[A-za-z]"
+            | DIGIT -> "[0-9]"
+            | HEXDIG -> "[0-9A-F]"
+            | DQUOTE -> "\""
+            | SP -> "\ "
+            | HTAB -> "\\t"
+            | WSP -> "[ \\t]"
+            | CR -> "\\r"
+            | LF -> "\\n"
+            | CRLF -> "\\r\\n"
+            | LWSP -> "(?:[ \\t]|\\r\\n[ \\t])*"
+            | VCHAR -> "[!-~]"
+            | CHAR -> "[\\x01-\\x7E]"
+            | OCTET -> "[\\x00-\\x7F]"
+            | CTL -> "[\\x00-\\x1F\\x7F]"
+            | BIT -> "[01]"
         | OptionalSequence element ->
             element
             |> generateNext
