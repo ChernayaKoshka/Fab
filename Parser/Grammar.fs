@@ -127,8 +127,6 @@ let pCoreRule : Parser<_> =
     .>>? notFollowedBy pRuleChar
     <!> "pCoreRule"
 
-let (pRuleElement, pRuleElementRef) : (Parser<RuleElement> * Parser<RuleElement> ref) = createParserForwardedToRef()
-
 let (pNotSequence, pNotSequenceRef) : (Parser<RuleElement> * Parser<RuleElement> ref) = createParserForwardedToRef()
 let pSequence : Parser<_> =
     sepEndBy1 pNotSequence pSpace
@@ -187,19 +185,6 @@ let pRange : Parser<_> =
 //Grouping, optional
 //Concatenation
 //Alternative
-do pRuleElementRef :=
-    choice
-        [
-            pSequenceGroup
-            pOptionalGroup
-            pAlternates
-            pTerminals
-            pCoreRule
-            pRuleReference
-            pString
-        ]
-    <!> "pRuleElement"
-
 do pNotAlternatesRef :=
     (opt pRange)
     .>>.
