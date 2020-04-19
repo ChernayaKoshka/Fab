@@ -44,6 +44,7 @@ type RuleElement =
         override this.ToString() =
             match this with
             | Terminals terms -> sprintf "Terminals [%d..%d]" (int terms.[terms.Length-1]) (int terms.[0])
+            | CoreRule rule -> rule.ToString()
             | Alternatives elems -> sprintf "Alternatives: %s" ((sprintf "%O" elems).Replace("\r", "").Replace("\n", "  "))
             | OptionalSequence elems -> sprintf "OptionalSequence: %s" ((sprintf "%O" elems).Replace("\r", "").Replace("\n", "  "))
             | Sequence elems -> sprintf "Sequence: %s" ((sprintf "%O" elems).Replace("\r", "").Replace("\n", "  "))
