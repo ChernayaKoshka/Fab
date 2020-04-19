@@ -99,8 +99,8 @@ let pComment : Parser<_> =
     <!> "pComment"
 
 let pString : Parser<_> =
-    between (pchar '"') (pchar '"') (many (noneOf [ '"' ]))
-    |>> Terminals
+    between (pchar '"') (pchar '"') (manyChars (noneOf [ '"' ]))
+    |>> REString
     <!> "pString"
 
 let pCoreRule : Parser<_> =
