@@ -36,6 +36,7 @@ let rec matchElements (rules : Rule list) (str : RuleStream) (elements : RuleEle
                         (true, { rs with Pos = rs.Pos + 1 })
                     else
                         (false, rs)) (true, str)
+        | CoreRule _ -> raise <| System.NotSupportedException()
         | Alternatives     elements ->
             let result =
                 elements
