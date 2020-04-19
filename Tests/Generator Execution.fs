@@ -50,20 +50,30 @@ let streets =
 
 [<Tests>]
 let simpleStringParsing =
-    testCase "simple string parsing" (fun _ ->
-        let parser =
-            Helpers.run pRuleRecord "test = \"AbCdEfGhIjklmnopqrstuvwxYZ\""
-            |> Helpers.generateSingle
-        Helpers.expectWellFormedRegex parser
+    testList "string parsing tests" [
+        testCase "simple string parsing" (fun _ ->
+            let parser =
+                Helpers.run pRuleRecord "test = \"AbCdEfGhIjklmnopqrstuvwxYZ\""
+                |> Helpers.generateSingle
+            Helpers.expectWellFormedRegex parser
         
-        [
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            "ABCDEFGHIJKLMNOPQRStuvwxyz"
-            "abcdefghijklmnopqrsTUVWXYZ"
-        ]
-        |> List.iter (Helpers.expectSuccessfulMatch parser)
-    )
+            [
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                "ABCDEFGHIJKLMNOPQRStuvwxyz"
+                "abcdefghijklmnopqrsTUVWXYZ"
+            ]
+            |> List.iter (Helpers.expectSuccessfulMatch parser)
+        )
 
+        testCase "string with special characters properly parses" (fun _ ->
+            let parser =
+                Helpers.run pRuleRecord "test = \"\\\""
+                |> Helpers.generateSingle
+            Helpers.expectWellFormedRegex parser
+            Helpers.expectSuccessfulMatch parser "\\" 
+        )
+    ]
+    
 [<Tests>]
 let simpleRuleParsing =
     testList "ruleset processing" [
