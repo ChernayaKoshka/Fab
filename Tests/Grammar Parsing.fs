@@ -74,21 +74,21 @@ let simple =
 
         testList "core rule parsing tests"
            ([
-                (@"ALPHA", Alternatives (ALPHA |> List.map (fun c -> Terminals [c])))
-                (@"DIGIT", Alternatives (DIGIT |> List.map (fun c -> Terminals [c])))
-                (@"HEXDIG", Alternatives (HEXDIG |> List.map (fun c -> Terminals [c])))
-                (@"DQUOTE", Terminals [ DQUOTE ])
-                (@"SP", Terminals [ SP ])
-                (@"HTAB", Terminals [ HTAB ])
-                (@"WSP", Alternatives (WSP |> List.map (fun c -> Terminals [c])))
-                (@"VCHAR", Alternatives (VCHAR |> List.map (fun c -> Terminals [c])))
-                (@"CHAR", Alternatives (CHAR |> List.map (fun c -> Terminals [c])))
-                (@"OCTET", Alternatives (OCTET |> List.map (fun c -> Terminals [c])))
-                (@"CTL", Alternatives (CTL |> List.map (fun c -> Terminals [c])))
-                (@"CR", Terminals [ CR ])
-                (@"LF", Terminals [ LF ])
-                (@"CRLF", Terminals (List.ofArray <| CRLF.ToCharArray()))
-                (@"BIT", Alternatives (BIT |> List.map (fun c -> Terminals [c])))
+                ("ALPHA", CoreRule ALPHA)
+                ("DIGIT", CoreRule DIGIT)
+                ("HEXDIG", CoreRule HEXDIG)
+                ("DQUOTE", CoreRule DQUOTE)
+                ("SP", CoreRule SP)
+                ("HTAB", CoreRule HTAB)
+                ("WSP", CoreRule WSP)
+                ("VCHAR", CoreRule VCHAR)
+                ("CHAR", CoreRule CHAR)
+                ("OCTET", CoreRule OCTET)
+                ("CTL", CoreRule CTL)
+                ("CR", CoreRule CR)
+                ("LF", CoreRule LF)
+                ("CRLF", CoreRule CRLF)
+                ("BIT", CoreRule BIT)
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "core rule parsing test: %s" str) <| fun _ ->
@@ -161,11 +161,11 @@ let combinations =
                 (@"""0"" / (""1"" / ""2"") / ""3""", Alternatives [Terminals ['0']; Sequence [Alternatives [Terminals ['1']; Terminals ['2']]]; Terminals ['3']])
                 (@"[""0"" / (""1"" / ""2"")] / ""3"" ""4""", Alternatives [OptionalSequence (Sequence [Alternatives [Terminals ['0']; Sequence [Alternatives [Terminals ['1']; Terminals ['2']]]]]); Terminals ['3']])
                 (@"""0"" / [""1"" / ""2""] / ""3""", Alternatives [Terminals ['0']; OptionalSequence (Sequence [Alternatives [Terminals ['1']; Terminals ['2']]]); Terminals ['3']])
-                (@"%x20 / (""1"" / ""2"") / %x20", Alternatives [Terminals [' ']; Sequence [Alternatives [Terminals ['1']; Terminals ['2']]]; Terminals [' ']])
+                (@"%x20 / (""1"" / ""2"") / %x20", Alternatives [ Terminals [' ']; Sequence [Alternatives [Terminals ['1']; Terminals ['2']]];  Terminals [' ']])
                 (@"[%d20 / (""1"" / ""2"")] / %b0101", Alternatives [OptionalSequence (Sequence [Alternatives [Terminals ['\020']; Sequence [Alternatives [Terminals ['1']; Terminals ['2']]]]]); Terminals ['\005']])
-                (@"%b0101 / [""1"" / ""2""] / %x20", Alternatives [Terminals ['\005']; OptionalSequence (Sequence [Alternatives [Terminals ['1']; Terminals ['2']]]); Terminals [' ']])
+                (@"%b0101 / [""1"" / ""2""] / %x20", Alternatives [Terminals ['\005']; OptionalSequence (Sequence [Alternatives [Terminals ['1']; Terminals ['2']]]);  Terminals [' ']])
                 (@"[%b0101 / [""1"" / ""2""] / %x20]", OptionalSequence (Sequence [Alternatives [Terminals ['\005']; OptionalSequence (Sequence [Alternatives [Terminals ['1']; Terminals ['2']]]); Terminals [' ']]]))
-                (@"[%b0101 / (%x0F) / %x20]", OptionalSequence (Sequence [Alternatives [Terminals ['\005']; Sequence [Terminals ['\015']]; Terminals [' ']]]))
+                (@"[%b0101 / (%x0F) / %x20]", OptionalSequence (Sequence [Alternatives [Terminals ['\005']; Sequence [Terminals ['\015']];  Terminals [' ']]]))
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "group parsing test: %s" str) <| fun _ ->
@@ -188,6 +188,7 @@ let combinations =
                 (@"*""2""", Repetition (Any, Terminals ['2']))
                 (@"*(""2"" / ""3"")", Repetition (Any, Sequence [Alternatives [Terminals ['2']; Terminals ['3']]]))
                 (@"*[""2"" / ""3""]", Repetition (Any, OptionalSequence (Sequence [Alternatives [Terminals ['2']; Terminals ['3']]])))
+                (@"*(WSP / CRLF WSP)", Repetition(Any, Sequence [ Alternatives [ Sequence [ CoreRule CRLF; CoreRule WSP ]; CoreRule WSP ] ] ))
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "group repetition parsing test: %s" str) <| fun _ ->
@@ -277,65 +278,19 @@ let rules =
                 (@"name-part        = *(personal-part SP) last-name [SP suffix] CRLF", ("name-part",
                     [Repetition
                        (Any,
-                        Sequence [RuleReference "personal-part"; Terminals [' ']]);
+                        Sequence [RuleReference "personal-part";  CoreRule SP]);
                      RuleReference "last-name";
                      OptionalSequence
-                       (Sequence [Terminals [' ']; RuleReference "suffix"]);
-                     Terminals ['\013'; '\010']]))
-                (@"name-part        = personal-part CRLF", ("name-part", [RuleReference "personal-part"; Terminals ['\013'; '\010']]))
+                       (Sequence [ CoreRule SP; RuleReference "suffix"]);
+                     CoreRule CRLF]))
+                (@"name-part        = personal-part CRLF", ("name-part", [RuleReference "personal-part"; CoreRule CRLF]))
                 (@"personal-part    = first-name / (initial ""."")", ("personal-part",
                     [Alternatives
                        [RuleReference "first-name";
                         Sequence [RuleReference "initial"; Terminals ['.']]]]))
-                (@"first-name       = *ALPHA", ("first-name",
-                    [Repetition
-                       (Any,
-                        Alternatives
-                          [Terminals ['A']; Terminals ['B']; Terminals ['C']; Terminals ['D'];
-                           Terminals ['E']; Terminals ['F']; Terminals ['G']; Terminals ['H'];
-                           Terminals ['I']; Terminals ['J']; Terminals ['K']; Terminals ['L'];
-                           Terminals ['M']; Terminals ['N']; Terminals ['O']; Terminals ['P'];
-                           Terminals ['Q']; Terminals ['R']; Terminals ['S']; Terminals ['T'];
-                           Terminals ['U']; Terminals ['V']; Terminals ['W']; Terminals ['X'];
-                           Terminals ['Y']; Terminals ['Z']; Terminals ['a']; Terminals ['b'];
-                           Terminals ['c']; Terminals ['d']; Terminals ['e']; Terminals ['f'];
-                           Terminals ['g']; Terminals ['h']; Terminals ['i']; Terminals ['j'];
-                           Terminals ['k']; Terminals ['l']; Terminals ['m']; Terminals ['n'];
-                           Terminals ['o']; Terminals ['p']; Terminals ['q']; Terminals ['r'];
-                           Terminals ['s']; Terminals ['t']; Terminals ['u']; Terminals ['v'];
-                           Terminals ['w']; Terminals ['x']; Terminals ['y']; Terminals ['z']])]))
-                (@"initial          = ALPHA", ("initial",
-                    [Alternatives
-                       [Terminals ['A']; Terminals ['B']; Terminals ['C']; Terminals ['D'];
-                        Terminals ['E']; Terminals ['F']; Terminals ['G']; Terminals ['H'];
-                        Terminals ['I']; Terminals ['J']; Terminals ['K']; Terminals ['L'];
-                        Terminals ['M']; Terminals ['N']; Terminals ['O']; Terminals ['P'];
-                        Terminals ['Q']; Terminals ['R']; Terminals ['S']; Terminals ['T'];
-                        Terminals ['U']; Terminals ['V']; Terminals ['W']; Terminals ['X'];
-                        Terminals ['Y']; Terminals ['Z']; Terminals ['a']; Terminals ['b'];
-                        Terminals ['c']; Terminals ['d']; Terminals ['e']; Terminals ['f'];
-                        Terminals ['g']; Terminals ['h']; Terminals ['i']; Terminals ['j'];
-                        Terminals ['k']; Terminals ['l']; Terminals ['m']; Terminals ['n'];
-                        Terminals ['o']; Terminals ['p']; Terminals ['q']; Terminals ['r'];
-                        Terminals ['s']; Terminals ['t']; Terminals ['u']; Terminals ['v'];
-                        Terminals ['w']; Terminals ['x']; Terminals ['y']; Terminals ['z']]]))
-                (@"last-name        = *ALPHA ; this is a test comment", ("last-name",
-                    [Repetition
-                       (Any,
-                        Alternatives
-                          [Terminals ['A']; Terminals ['B']; Terminals ['C']; Terminals ['D'];
-                           Terminals ['E']; Terminals ['F']; Terminals ['G']; Terminals ['H'];
-                           Terminals ['I']; Terminals ['J']; Terminals ['K']; Terminals ['L'];
-                           Terminals ['M']; Terminals ['N']; Terminals ['O']; Terminals ['P'];
-                           Terminals ['Q']; Terminals ['R']; Terminals ['S']; Terminals ['T'];
-                           Terminals ['U']; Terminals ['V']; Terminals ['W']; Terminals ['X'];
-                           Terminals ['Y']; Terminals ['Z']; Terminals ['a']; Terminals ['b'];
-                           Terminals ['c']; Terminals ['d']; Terminals ['e']; Terminals ['f'];
-                           Terminals ['g']; Terminals ['h']; Terminals ['i']; Terminals ['j'];
-                           Terminals ['k']; Terminals ['l']; Terminals ['m']; Terminals ['n'];
-                           Terminals ['o']; Terminals ['p']; Terminals ['q']; Terminals ['r'];
-                           Terminals ['s']; Terminals ['t']; Terminals ['u']; Terminals ['v'];
-                           Terminals ['w']; Terminals ['x']; Terminals ['y']; Terminals ['z']])]))
+                (@"first-name       = *ALPHA", ("first-name", [Repetition (Any, CoreRule ALPHA)]))
+                (@"initial          = ALPHA", ("initial", [ CoreRule ALPHA ]))
+                (@"last-name        = *ALPHA ; this is a test comment", ("last-name", [Repetition (Any, CoreRule ALPHA)]))
                 (@"suffix           = (""Jr."" / ""Sr."" / 1*(""I"" / ""V"" / ""X""))", ("suffix",
                     [Sequence
                        [Alternatives
@@ -346,126 +301,50 @@ let rules =
                                 [Alternatives [Terminals ['I']; Terminals ['V']; Terminals ['X']]])]]]))
                 (@"street           = [apt SP] house-num SP street-name CRLF", ("street",
                     [OptionalSequence
-                       (Sequence [RuleReference "apt"; Terminals [' ']]);
-                     RuleReference "house-num"; Terminals [' '];
-                     RuleReference "street-name"; Terminals ['\013'; '\010']]))
+                       (Sequence [RuleReference "apt";  CoreRule SP]);
+                     RuleReference "house-num";  CoreRule SP;
+                     RuleReference "street-name"; CoreRule CRLF]))
                 (@"apt              = 1*4DIGIT", ("apt",
                     [Repetition
-                       (Between(1uy, 4uy),
-                        Alternatives
-                          [Terminals ['0']; Terminals ['1']; Terminals ['2']; Terminals ['3'];
-                           Terminals ['4']; Terminals ['5']; Terminals ['6']; Terminals ['7'];
-                           Terminals ['8']; Terminals ['9']])]))
+                       (Between(1uy, 4uy), CoreRule DIGIT)]))
                 (@"house-num        = 1*8(DIGIT / ALPHA)", ("house-num",
                     [Repetition
                        (Between(1uy, 8uy),
-                        Sequence
-                          [Alternatives
-                             [Alternatives
-                                [Terminals ['0']; Terminals ['1']; Terminals ['2']; Terminals ['3'];
-                                 Terminals ['4']; Terminals ['5']; Terminals ['6']; Terminals ['7'];
-                                 Terminals ['8']; Terminals ['9']];
-                              Alternatives
-                                [Terminals ['A']; Terminals ['B']; Terminals ['C']; Terminals ['D'];
-                                 Terminals ['E']; Terminals ['F']; Terminals ['G']; Terminals ['H'];
-                                 Terminals ['I']; Terminals ['J']; Terminals ['K']; Terminals ['L'];
-                                 Terminals ['M']; Terminals ['N']; Terminals ['O']; Terminals ['P'];
-                                 Terminals ['Q']; Terminals ['R']; Terminals ['S']; Terminals ['T'];
-                                 Terminals ['U']; Terminals ['V']; Terminals ['W']; Terminals ['X'];
-                                 Terminals ['Y']; Terminals ['Z']; Terminals ['a']; Terminals ['b'];
-                                 Terminals ['c']; Terminals ['d']; Terminals ['e']; Terminals ['f'];
-                                 Terminals ['g']; Terminals ['h']; Terminals ['i']; Terminals ['j'];
-                                 Terminals ['k']; Terminals ['l']; Terminals ['m']; Terminals ['n'];
-                                 Terminals ['o']; Terminals ['p']; Terminals ['q']; Terminals ['r'];
-                                 Terminals ['s']; Terminals ['t']; Terminals ['u']; Terminals ['v'];
-                                 Terminals ['w']; Terminals ['x']; Terminals ['y']; Terminals ['z']]]])]))
-                (@"street-name      = 1*VCHAR", ("street-name",
-                    [Repetition
-                       (AtLeast 1uy,
-
-                        Alternatives
-                          [Terminals ['!']; Terminals ['"']; Terminals ['#']; Terminals ['$'];
-                           Terminals ['%']; Terminals ['&']; Terminals ['\'']; Terminals ['('];
-                           Terminals [')']; Terminals ['*']; Terminals ['+']; Terminals [','];
-                           Terminals ['-']; Terminals ['.']; Terminals ['/']; Terminals ['0'];
-                           Terminals ['1']; Terminals ['2']; Terminals ['3']; Terminals ['4'];
-                           Terminals ['5']; Terminals ['6']; Terminals ['7']; Terminals ['8'];
-                           Terminals ['9']; Terminals [':']; Terminals [';']; Terminals ['<'];
-                           Terminals ['=']; Terminals ['>']; Terminals ['?']; Terminals ['@'];
-                           Terminals ['A']; Terminals ['B']; Terminals ['C']; Terminals ['D'];
-                           Terminals ['E']; Terminals ['F']; Terminals ['G']; Terminals ['H'];
-                           Terminals ['I']; Terminals ['J']; Terminals ['K']; Terminals ['L'];
-                           Terminals ['M']; Terminals ['N']; Terminals ['O']; Terminals ['P'];
-                           Terminals ['Q']; Terminals ['R']; Terminals ['S']; Terminals ['T'];
-                           Terminals ['U']; Terminals ['V']; Terminals ['W']; Terminals ['X'];
-                           Terminals ['Y']; Terminals ['Z']; Terminals ['[']; Terminals ['\\'];
-                           Terminals [']']; Terminals ['^']; Terminals ['_']; Terminals ['`'];
-                           Terminals ['a']; Terminals ['b']; Terminals ['c']; Terminals ['d'];
-                           Terminals ['e']; Terminals ['f']; Terminals ['g']; Terminals ['h'];
-                           Terminals ['i']; Terminals ['j']; Terminals ['k']; Terminals ['l'];
-                           Terminals ['m']; Terminals ['n']; Terminals ['o']; Terminals ['p'];
-                           Terminals ['q']; Terminals ['r']; Terminals ['s']; Terminals ['t'];
-                           Terminals ['u']; Terminals ['v']; Terminals ['w']; Terminals ['x'];
-                           Terminals ['y']; Terminals ['z']; Terminals ['{']; Terminals ['|'];
-                           Terminals ['}']; Terminals ['~']])]))
+                        Sequence [
+                            Alternatives [
+                                CoreRule DIGIT
+                                CoreRule ALPHA
+                            ]
+                        ])
+                    ]))
+                (@"street-name      = 1*VCHAR", ("street-name", [Repetition(AtLeast 1uy, CoreRule VCHAR)]))
                 (@"zip-part         = town-name "","" SP state 1*2SP zip-code CRLF", ("zip-part",
-                    [RuleReference "town-name"; Terminals [',']; Terminals [' '];
+                    [RuleReference "town-name"; Terminals [','];  CoreRule SP;
                      RuleReference "state";
-                     Repetition (Between(1uy, 2uy),Terminals [' ']);
-                     RuleReference "zip-code"; Terminals ['\013'; '\010']]))
+                     Repetition (Between(1uy, 2uy), CoreRule SP);
+                     RuleReference "zip-code"; CoreRule CRLF]))
                 (@"town-name        = 1*(ALPHA / SP)", ("town-name",
                     [Repetition
                        (AtLeast 1uy,
-                        Sequence
-                          [Alternatives
-                             [Alternatives
-                                [Terminals ['A']; Terminals ['B']; Terminals ['C']; Terminals ['D'];
-                                 Terminals ['E']; Terminals ['F']; Terminals ['G']; Terminals ['H'];
-                                 Terminals ['I']; Terminals ['J']; Terminals ['K']; Terminals ['L'];
-                                 Terminals ['M']; Terminals ['N']; Terminals ['O']; Terminals ['P'];
-                                 Terminals ['Q']; Terminals ['R']; Terminals ['S']; Terminals ['T'];
-                                 Terminals ['U']; Terminals ['V']; Terminals ['W']; Terminals ['X'];
-                                 Terminals ['Y']; Terminals ['Z']; Terminals ['a']; Terminals ['b'];
-                                 Terminals ['c']; Terminals ['d']; Terminals ['e']; Terminals ['f'];
-                                 Terminals ['g']; Terminals ['h']; Terminals ['i']; Terminals ['j'];
-                                 Terminals ['k']; Terminals ['l']; Terminals ['m']; Terminals ['n'];
-                                 Terminals ['o']; Terminals ['p']; Terminals ['q']; Terminals ['r'];
-                                 Terminals ['s']; Terminals ['t']; Terminals ['u']; Terminals ['v'];
-                                 Terminals ['w']; Terminals ['x']; Terminals ['y']; Terminals ['z']];
-                              Terminals [' ']]])]))
+                            Sequence [
+                                Alternatives [
+                                    CoreRule ALPHA;
+                                    CoreRule SP
+                                ]
+                            ]
+                        )
+                    ]))
                 (@"state            = 2ALPHA", ("state",
                     [Repetition
-                       (Exactly 2uy,
-                        Alternatives
-                          [Terminals ['A']; Terminals ['B']; Terminals ['C']; Terminals ['D'];
-                           Terminals ['E']; Terminals ['F']; Terminals ['G']; Terminals ['H'];
-                           Terminals ['I']; Terminals ['J']; Terminals ['K']; Terminals ['L'];
-                           Terminals ['M']; Terminals ['N']; Terminals ['O']; Terminals ['P'];
-                           Terminals ['Q']; Terminals ['R']; Terminals ['S']; Terminals ['T'];
-                           Terminals ['U']; Terminals ['V']; Terminals ['W']; Terminals ['X'];
-                           Terminals ['Y']; Terminals ['Z']; Terminals ['a']; Terminals ['b'];
-                           Terminals ['c']; Terminals ['d']; Terminals ['e']; Terminals ['f'];
-                           Terminals ['g']; Terminals ['h']; Terminals ['i']; Terminals ['j'];
-                           Terminals ['k']; Terminals ['l']; Terminals ['m']; Terminals ['n'];
-                           Terminals ['o']; Terminals ['p']; Terminals ['q']; Terminals ['r'];
-                           Terminals ['s']; Terminals ['t']; Terminals ['u']; Terminals ['v'];
-                           Terminals ['w']; Terminals ['x']; Terminals ['y']; Terminals ['z']])]))
+                       (Exactly 2uy, CoreRule ALPHA)]))
                 (@"zip-code         = 5DIGIT [""-"" 4DIGIT]", ("zip-code",
                     [Repetition
-                       (Exactly 5uy,
-                        Alternatives
-                          [Terminals ['0']; Terminals ['1']; Terminals ['2']; Terminals ['3'];
-                           Terminals ['4']; Terminals ['5']; Terminals ['6']; Terminals ['7'];
-                           Terminals ['8']; Terminals ['9']]);
+                       (Exactly 5uy, CoreRule DIGIT);
                      OptionalSequence
                        (Sequence
                           [Terminals ['-'];
                            Repetition
-                             (Exactly 4uy,
-                              Alternatives
-                                [Terminals ['0']; Terminals ['1']; Terminals ['2']; Terminals ['3'];
-                                 Terminals ['4']; Terminals ['5']; Terminals ['6']; Terminals ['7'];
-                                 Terminals ['8']; Terminals ['9']])])]))
+                             (Exactly 4uy, CoreRule DIGIT)])]))
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "complex rule parsing test: %s" str) <| fun _ ->
@@ -528,8 +407,8 @@ let rules =
                        (Any,
                         Sequence
                           [Alternatives
-                             [Terminals [':']; Terminals [' ']; RuleReference "nospcrlfcl"]])]))
-                (@"SPACE      =  %x20        ; space character", ("SPACE", [Terminals [' ']]))
+                             [Terminals [':'];  Terminals [' ']; RuleReference "nospcrlfcl"]])]))
+                (@"SPACE      =  %x20        ; space character", ("SPACE", [ Terminals [ ' ' ]]))
                 (@"crlf       =  %x0D %x0A   ; ""carriage return"" ""linefeed""", ("crlf", [Terminals ['\013']; Terminals ['\010']]))
                 (@"target     =  nickname / server", ("target", [Alternatives [RuleReference "nickname"; RuleReference "server"]]))
                 (@"msgtarget  =  msgto *( "","" msgto )", ("msgtarget",
