@@ -39,9 +39,12 @@ let simple =
             Helpers.parseAndCompare
                 pString
                 [
-                    (@"""this is a string""", Terminals ['t'; 'h'; 'i'; 's'; ' '; 'i'; 's'; ' '; 'a'; ' '; 's'; 't'; 'r'; 'i'; 'n'; 'g'])
-                    (@"""this""", Terminals ['t'; 'h'; 'i'; 's'])
-                    (@"""thisa235hfnv""", Terminals ['t'; 'h'; 'i'; 's'; 'a'; '2'; '3'; '5'; 'h'; 'f'; 'n'; 'v'])
+                    (@"""this is a string""", REString "this is a string")
+                    (@"""this""", REString "this")
+                    (@"""thisa235hfnv""", REString "thisa235hfnv")
+                    (@"""SP DIGIT ALPHA""", REString "SP DIGIT ALPHA")
+                    (@"""(THIS SHOULD NOT GET PARSED AS ANYTHING OTHER THAN A STRING )""", REString "(THIS SHOULD NOT GET PARSED AS ANYTHING OTHER THAN A STRING )")
+                    (@"""!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~""", REString """!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~""")
                 ]
 
         testCase "repetition parsing tests" <|
@@ -86,7 +89,7 @@ let groups =
                     (@"%d1", Sequence [Terminals ['\001']])
                     (@"%d1 %d2", Sequence [Terminals ['\001']; Terminals ['\002']])
                     (@"%d1 %d2 / %d3", Sequence [Terminals ['\001']; Alternatives [Terminals ['\002']; Terminals ['\003']]])
-                    (@"""1"" ""2"" ""3""", Sequence [Terminals ['1']; Terminals ['2']; Terminals ['3']])
+                    (@"""1"" ""2"" ""3""", Sequence [REString "1"; REString "2"; REString "3"])
                 ]
 
         testCase "sequence group parsing tests" <|
@@ -96,7 +99,7 @@ let groups =
                     (@"(%d1)", Sequence [Terminals ['\001']])
                     (@"(%d1 %d2)", Sequence [Terminals ['\001']; Terminals ['\002']])
                     (@"(%d1 %d2 / %d3)", Sequence [Terminals ['\001']; Alternatives [Terminals ['\002']; Terminals ['\003']]])
-                    (@"(""1"" ""2"" ""3"")", Sequence [Terminals ['1']; Terminals ['2']; Terminals ['3']])
+                    (@"(""1"" ""2"" ""3"")", Sequence [REString "1"; REString "2"; REString "3"])
                 ]
 
         testCase "alternate parsing tests" <|
@@ -106,7 +109,7 @@ let groups =
                     (@"%d1", Terminals ['\001'])
                     (@"%d1 / %d2", Alternatives [Terminals ['\001']; Terminals ['\002']])
                     (@"%d1 / %d2 / %d3", Alternatives [Terminals ['\001']; Terminals ['\002']; Terminals ['\003']])
-                    (@"""1"" / ""2"" / ""3""", Alternatives [Terminals ['1']; Terminals ['2']; Terminals ['3']])
+                    (@"""1"" / ""2"" / ""3""", Alternatives [REString "1"; REString "2"; REString "3"])
                 ]
 
         testCase "optional group parsing tests" <|
@@ -116,7 +119,7 @@ let groups =
                     (@"[%d1]", OptionalSequence (Sequence [Terminals ['\001']]))
                     (@"[%d1 %d2]", OptionalSequence (Sequence [Terminals ['\001']; Terminals ['\002']]))
                     (@"[%d1 %d2 %d3]", OptionalSequence (Sequence [Terminals ['\001']; Terminals ['\002']; Terminals ['\003']]))
-                    (@"[""1"" ""2"" ""3""]", OptionalSequence (Sequence [Terminals ['1']; Terminals ['2']; Terminals ['3']]))
+                    (@"[""1"" ""2"" ""3""]", OptionalSequence (Sequence [REString "1"; REString "2"; REString "3"]))
                 ]
         testCase "groups containing rule references tests" <|
             Helpers.parseAndCompare
@@ -133,13 +136,13 @@ let combinations =
             Helpers.parseAndCompare
                 pAlternates
                 [
-                    (@"""0"" / (""1"" / ""2"") / ""3""", Alternatives [Terminals ['0']; Sequence [Alternatives [Terminals ['1']; Terminals ['2']]]; Terminals ['3']])
-                    (@"[""0"" / (""1"" / ""2"")] / ""3"" ""4""", Alternatives [OptionalSequence (Sequence [Alternatives [Terminals ['0']; Sequence [Alternatives [Terminals ['1']; Terminals ['2']]]]]); Terminals ['3']])
-                    (@"""0"" / [""1"" / ""2""] / ""3""", Alternatives [Terminals ['0']; OptionalSequence (Sequence [Alternatives [Terminals ['1']; Terminals ['2']]]); Terminals ['3']])
-                    (@"%x20 / (""1"" / ""2"") / %x20", Alternatives [ Terminals [' ']; Sequence [Alternatives [Terminals ['1']; Terminals ['2']]];  Terminals [' ']])
-                    (@"[%d20 / (""1"" / ""2"")] / %b0101", Alternatives [OptionalSequence (Sequence [Alternatives [Terminals ['\020']; Sequence [Alternatives [Terminals ['1']; Terminals ['2']]]]]); Terminals ['\005']])
-                    (@"%b0101 / [""1"" / ""2""] / %x20", Alternatives [Terminals ['\005']; OptionalSequence (Sequence [Alternatives [Terminals ['1']; Terminals ['2']]]);  Terminals [' ']])
-                    (@"[%b0101 / [""1"" / ""2""] / %x20]", OptionalSequence (Sequence [Alternatives [Terminals ['\005']; OptionalSequence (Sequence [Alternatives [Terminals ['1']; Terminals ['2']]]); Terminals [' ']]]))
+                    (@"""0"" / (""1"" / ""2"") / ""3""", Alternatives [REString "0"; Sequence [Alternatives [REString "1"; REString "2"]]; REString "3"])
+                    (@"[""0"" / (""1"" / ""2"")] / ""3"" ""4""", Alternatives [OptionalSequence (Sequence [Alternatives [REString "0"; Sequence [Alternatives [REString "1"; REString "2"]]]]); REString "3"])
+                    (@"""0"" / [""1"" / ""2""] / ""3""", Alternatives [REString "0"; OptionalSequence (Sequence [Alternatives [REString "1"; REString "2"]]); REString "3"])
+                    (@"%x20 / (""1"" / ""2"") / %x20", Alternatives [ Terminals [' ']; Sequence [Alternatives [REString "1"; REString "2"]];  Terminals [' ']])
+                    (@"[%d20 / (""1"" / ""2"")] / %b0101", Alternatives [OptionalSequence (Sequence [Alternatives [Terminals ['\020']; Sequence [Alternatives [REString "1"; REString "2"]]]]); Terminals ['\005']])
+                    (@"%b0101 / [""1"" / ""2""] / %x20", Alternatives [Terminals ['\005']; OptionalSequence (Sequence [Alternatives [REString "1"; REString "2"]]);  Terminals [' ']])
+                    (@"[%b0101 / [""1"" / ""2""] / %x20]", OptionalSequence (Sequence [Alternatives [Terminals ['\005']; OptionalSequence (Sequence [Alternatives [REString "1"; REString "2"]]); Terminals [' ']]]))
                     (@"[%b0101 / (%x0F) / %x20]", OptionalSequence (Sequence [Alternatives [Terminals ['\005']; Sequence [Terminals ['\015']];  Terminals [' ']]]))
                 ]
 
@@ -148,18 +151,18 @@ let combinations =
                 pAlternates
                 [
                     (@"1*2test-rule", Repetition (Between(1uy, 2uy), RuleReference "test-rule"))
-                    (@"1*2""2""", Repetition (Between(1uy, 2uy), Terminals ['2']))
-                    (@"1*2(""2"" / ""3"")", Repetition (Between(1uy, 2uy), Sequence [Alternatives [Terminals ['2']; Terminals ['3']]]))
-                    (@"1*2[""2"" / ""3""]", Repetition (Between(1uy, 2uy), OptionalSequence (Sequence [Alternatives [Terminals ['2']; Terminals ['3']]])))
-                    (@"*2""2""", Repetition (AtMost 2uy, Terminals ['2']))
-                    (@"*2(""2"" / ""3"")", Repetition (AtMost 2uy, Sequence [Alternatives [Terminals ['2']; Terminals ['3']]]))
-                    (@"*2[""2"" / ""3""]", Repetition (AtMost 2uy, OptionalSequence (Sequence [Alternatives [Terminals ['2']; Terminals ['3']]])))
-                    (@"2*""2""", Repetition (AtLeast 2uy, Terminals ['2']))
-                    (@"2*(""2"" / ""3"")", Repetition (AtLeast 2uy, Sequence [Alternatives [Terminals ['2']; Terminals ['3']]]))
-                    (@"2*[""2"" / ""3""]", Repetition (AtLeast 2uy, OptionalSequence (Sequence [Alternatives [Terminals ['2']; Terminals ['3']]])))
-                    (@"*""2""", Repetition (Any, Terminals ['2']))
-                    (@"*(""2"" / ""3"")", Repetition (Any, Sequence [Alternatives [Terminals ['2']; Terminals ['3']]]))
-                    (@"*[""2"" / ""3""]", Repetition (Any, OptionalSequence (Sequence [Alternatives [Terminals ['2']; Terminals ['3']]])))
+                    (@"1*2""2""", Repetition (Between(1uy, 2uy), REString "2"))
+                    (@"1*2(""2"" / ""3"")", Repetition (Between(1uy, 2uy), Sequence [Alternatives [REString "2"; REString "3"]]))
+                    (@"1*2[""2"" / ""3""]", Repetition (Between(1uy, 2uy), OptionalSequence (Sequence [Alternatives [REString "2"; REString "3"]])))
+                    (@"*2""2""", Repetition (AtMost 2uy, REString "2"))
+                    (@"*2(""2"" / ""3"")", Repetition (AtMost 2uy, Sequence [Alternatives [REString "2"; REString "3"]]))
+                    (@"*2[""2"" / ""3""]", Repetition (AtMost 2uy, OptionalSequence (Sequence [Alternatives [REString "2"; REString "3"]])))
+                    (@"2*""2""", Repetition (AtLeast 2uy, REString "2"))
+                    (@"2*(""2"" / ""3"")", Repetition (AtLeast 2uy, Sequence [Alternatives [REString "2"; REString "3"]]))
+                    (@"2*[""2"" / ""3""]", Repetition (AtLeast 2uy, OptionalSequence (Sequence [Alternatives [REString "2"; REString "3"]])))
+                    (@"*""2""", Repetition (Any, REString "2"))
+                    (@"*(""2"" / ""3"")", Repetition (Any, Sequence [Alternatives [REString "2"; REString "3"]]))
+                    (@"*[""2"" / ""3""]", Repetition (Any, OptionalSequence (Sequence [Alternatives [REString "2"; REString "3"]])))
                     (@"*(WSP / CRLF WSP)", Repetition(Any, Sequence [ Alternatives [ Sequence [ CoreRule CRLF; CoreRule WSP ]; CoreRule WSP ] ] ))
                 ]
     ]
@@ -172,27 +175,23 @@ let rules =
             Helpers.parseAndCompare
                 pRule
                 [
-                    (@"TEST = ""0"" ""1"" ""2"" ""3"" ""4"" ""5"" ""6"" ""7""", ("TEST",
-                         [Terminals ['0']; Terminals ['1']; Terminals ['2']; Terminals ['3'];
-                          Terminals ['4']; Terminals ['5']; Terminals ['6']; Terminals ['7']]))
+                    (@"TEST = ""0"" ""1"" ""2"" ""3"" ""4"" ""5"" ""6"" ""7""", ("TEST", [REString "0"; REString "1"; REString "2"; REString "3"; REString "4"; REString "5"; REString "6"; REString "7"]))
                     (@"TEST = ""0"" / ""1"" / ""2"" / ""3"" / ""4"" / ""5"" / ""6"" / ""7""", ("TEST",
-                         [Alternatives
-                            [Terminals ['0']; Terminals ['1']; Terminals ['2']; Terminals ['3'];
-                             Terminals ['4']; Terminals ['5']; Terminals ['6']; Terminals ['7']]]))
-                    (@"TEST = ""0""", ("TEST", [Terminals ['0']]))
+                         [ Alternatives [ REString "0"; REString "1"; REString "2"; REString "3"; REString "4"; REString "5"; REString "6"; REString "7" ]]))
+                    (@"TEST = ""0""", ("TEST", [REString "0"]))
                     (@"TEST = ""0"" / (""1"" ""2"") / ""3"" / (""4"" / ""5"") / ""6"" / ""7""", ("TEST",
                          [Alternatives
-                            [Terminals ['0']; Sequence [Terminals ['1']; Terminals ['2']];
-                             Terminals ['3']; Sequence [Alternatives [Terminals ['4']; Terminals ['5']]];
-                             Terminals ['6']; Terminals ['7']]]))
+                            [REString "0"; Sequence [REString "1"; REString "2"];
+                             REString "3"; Sequence [Alternatives [REString "4"; REString "5"]];
+                             REString "6"; REString "7"]]))
                     (@"TEST = ""0"" (""1"" / ""2"") ""3"" (""4"" / ""5"") ""6"" ""7""", ("TEST",
-                         [Terminals ['0']; Sequence [Alternatives [Terminals ['1']; Terminals ['2']]];
-                          Terminals ['3']; Sequence [Alternatives [Terminals ['4']; Terminals ['5']]];
-                          Terminals ['6']; Terminals ['7']]))
+                         [REString "0"; Sequence [Alternatives [REString "1"; REString "2"]];
+                          REString "3"; Sequence [Alternatives [REString "4"; REString "5"]];
+                          REString "6"; REString "7"]))
                     (@"TEST = (""1"" / ""2"") ""3"" (""4"" / ""5"") ""6"" ""7""", ("TEST",
-                         [Sequence [Alternatives [Terminals ['1']; Terminals ['2']]]; Terminals ['3'];
-                          Sequence [Alternatives [Terminals ['4']; Terminals ['5']]]; Terminals ['6'];
-                          Terminals ['7']]))
+                         [Sequence [Alternatives [REString "1"; REString "2"]]; REString "3";
+                          Sequence [Alternatives [REString "4"; REString "5"]]; REString "6";
+                          REString "7"]))
                 ]
 
         testCase "basic rule with repetition parsing test" <|
@@ -200,36 +199,36 @@ let rules =
                 pRule
                 [
                     (@"test-rule0 = 1*2""2"" 2*3""3""", ("test-rule0",
-                         [Repetition (Between(1uy, 2uy),Terminals ['2']);
-                          Repetition (Between(2uy, 3uy),Terminals ['3'])]))
+                         [Repetition (Between(1uy, 2uy),REString "2");
+                          Repetition (Between(2uy, 3uy),REString "3")]))
                     (@"test-rule1 = 1*2""2"" 2*3test-reference", ("test-rule1",
-                         [Repetition (Between(1uy, 2uy),Terminals ['2']);
+                         [Repetition (Between(1uy, 2uy),REString "2");
                           Repetition (Between(2uy, 3uy),RuleReference "test-reference")]))
                     (@"test-rule2 = 1*2(""2"" / test-reference) 2*3[""2"" / test-reference]", ("test-rule2",
                          [Repetition
                             (Between(1uy, 2uy),
-                             Sequence [Alternatives [Terminals ['2']; RuleReference "test-reference"]]);
+                             Sequence [Alternatives [REString "2"; RuleReference "test-reference"]]);
                           Repetition
                             (Between(2uy, 3uy),
                              OptionalSequence
                                (Sequence
-                                  [Alternatives [Terminals ['2']; RuleReference "test-reference"]]))]))
+                                  [Alternatives [REString "2"; RuleReference "test-reference"]]))]))
                     (@"test-rule3 = 1*2(""2"" / ""3"") 2*3[""2"" / ""3""]", ("test-rule3",
                          [Repetition
                             (Between(1uy, 2uy),
-                             Sequence [Alternatives [Terminals ['2']; Terminals ['3']]]);
+                             Sequence [Alternatives [REString "2"; REString "3"]]);
                           Repetition
                             (Between(2uy, 3uy),
                              OptionalSequence
-                               (Sequence [Alternatives [Terminals ['2']; Terminals ['3']]]))]))
+                               (Sequence [Alternatives [REString "2"; REString "3"]]))]))
                     (@"test-rule4 = 1*2[""2"" / ""3""] 2*3(""2"" / ""3"")", ("test-rule4",
                          [Repetition
                             (Between(1uy, 2uy),
                              OptionalSequence
-                               (Sequence [Alternatives [Terminals ['2']; Terminals ['3']]]));
+                               (Sequence [Alternatives [REString "2"; REString "3"]]));
                           Repetition
                             (Between(2uy, 3uy),
-                             Sequence [Alternatives [Terminals ['2']; Terminals ['3']]])]))
+                             Sequence [Alternatives [REString "2"; REString "3"]])]))
                 ]
 
         testCase "complex rule parsing test - postal address" <|
@@ -250,18 +249,18 @@ let rules =
                     (@"personal-part    = first-name / (initial ""."")", ("personal-part",
                         [Alternatives
                            [RuleReference "first-name";
-                            Sequence [RuleReference "initial"; Terminals ['.']]]]))
+                            Sequence [RuleReference "initial"; REString "."]]]))
                     (@"first-name       = *ALPHA", ("first-name", [Repetition (Any, CoreRule ALPHA)]))
                     (@"initial          = ALPHA", ("initial", [ CoreRule ALPHA ]))
                     (@"last-name        = *ALPHA ; this is a test comment", ("last-name", [Repetition (Any, CoreRule ALPHA)]))
                     (@"suffix           = (""Jr."" / ""Sr."" / 1*(""I"" / ""V"" / ""X""))", ("suffix",
                         [Sequence
                            [Alternatives
-                              [Terminals ['J'; 'r'; '.']; Terminals ['S'; 'r'; '.'];
+                              [REString "Jr."; REString "Sr.";
                                Repetition
                                  (AtLeast 1uy,
                                   Sequence
-                                    [Alternatives [Terminals ['I']; Terminals ['V']; Terminals ['X']]])]]]))
+                                    [Alternatives [REString "I"; REString "V"; REString "X"]])]]]))
                     (@"street           = [apt SP] house-num SP street-name CRLF", ("street",
                         [OptionalSequence
                            (Sequence [RuleReference "apt";  CoreRule SP]);
@@ -282,7 +281,7 @@ let rules =
                         ]))
                     (@"street-name      = 1*VCHAR", ("street-name", [Repetition(AtLeast 1uy, CoreRule VCHAR)]))
                     (@"zip-part         = town-name "","" SP state 1*2SP zip-code CRLF", ("zip-part",
-                        [RuleReference "town-name"; Terminals [','];  CoreRule SP;
+                        [RuleReference "town-name"; REString ","; CoreRule SP;
                          RuleReference "state";
                          Repetition (Between(1uy, 2uy), CoreRule SP);
                          RuleReference "zip-code"; CoreRule CRLF]))
@@ -305,7 +304,7 @@ let rules =
                            (Exactly 5uy, CoreRule DIGIT);
                          OptionalSequence
                            (Sequence
-                              [Terminals ['-'];
+                              [REString "-";
                                Repetition
                                  (Exactly 4uy, CoreRule DIGIT)])]))
                 ]
@@ -316,7 +315,7 @@ let rules =
                 [
                     (@"message    =  [ "":"" prefix SPACE ] command [ params ] crlf", ("message",
                         [OptionalSequence
-                           (Sequence [Terminals [':']; RuleReference "prefix"; RuleReference "SPACE"]);
+                           (Sequence [REString ":"; RuleReference "prefix"; RuleReference "SPACE"]);
                          RuleReference "command"; OptionalSequence (Sequence [RuleReference "params"]);
                          RuleReference "crlf"]))
                     (@"prefix     =  servername / ( nickname [ [ ""!"" user ] ""@"" host ] )", ("prefix",
@@ -327,8 +326,8 @@ let rules =
                                OptionalSequence
                                  (Sequence
                                     [OptionalSequence
-                                       (Sequence [Terminals ['!']; RuleReference "user"]);
-                                     Terminals ['@']; RuleReference "host"])]]]))
+                                       (Sequence [REString "!"; RuleReference "user"]);
+                                     REString "@"; RuleReference "host"])]]]))
                     (@"command    =  1*letter / 3digit", ("command",
                         [Alternatives
                            [Repetition (AtLeast 1uy,RuleReference "letter");
@@ -337,13 +336,13 @@ let rules =
                         [Repetition
                            (AtMost 14uy,Sequence [RuleReference "SPACE"; RuleReference "middle"]);
                          OptionalSequence
-                           (Sequence [RuleReference "SPACE"; Terminals [':']; RuleReference "trailing"])]))
+                           (Sequence [RuleReference "SPACE"; REString ":"; RuleReference "trailing"])]))
                     (@"params     = 14( SPACE middle ) [ SPACE [ "":"" ] trailing ]", ("params",
                         [Repetition
                            (Exactly 14uy,Sequence [RuleReference "SPACE"; RuleReference "middle"]);
                          OptionalSequence
                            (Sequence
-                              [RuleReference "SPACE"; OptionalSequence (Sequence [Terminals [':']]);
+                              [RuleReference "SPACE"; OptionalSequence (Sequence [REString ":"]);
                                RuleReference "trailing"])]))
                     (@"nospcrlfcl =  %x01-09 / %x0B-0C / %x0E-1F / %x21-39 / %x3B-FF", ("nospcrlfcl",
                         [Alternatives
@@ -361,73 +360,73 @@ let rules =
                     (@"middle     =  nospcrlfcl *( "":"" / nospcrlfcl )", ("middle",
                         [RuleReference "nospcrlfcl";
                          Repetition
-                           (Any,Sequence [Alternatives [Terminals [':']; RuleReference "nospcrlfcl"]])]))
+                           (Any,Sequence [Alternatives [REString ":"; RuleReference "nospcrlfcl"]])]))
                     (@"trailing   =  *( "":"" / "" "" / nospcrlfcl )", ("trailing",
                         [Repetition
                            (Any,
                             Sequence
                               [Alternatives
-                                 [Terminals [':'];  Terminals [' ']; RuleReference "nospcrlfcl"]])]))
+                                 [REString ":";  REString " "; RuleReference "nospcrlfcl"]])]))
                     (@"SPACE      =  %x20        ; space character", ("SPACE", [ Terminals [ ' ' ]]))
                     (@"crlf       =  %x0D %x0A   ; ""carriage return"" ""linefeed""", ("crlf", [Terminals ['\013']; Terminals ['\010']]))
                     (@"target     =  nickname / server", ("target", [Alternatives [RuleReference "nickname"; RuleReference "server"]]))
                     (@"msgtarget  =  msgto *( "","" msgto )", ("msgtarget",
                         [RuleReference "msgto";
-                         Repetition (Any,Sequence [Terminals [',']; RuleReference "msgto"])]))
+                         Repetition (Any,Sequence [REString ","; RuleReference "msgto"])]))
                     (@"msgto      =  channel / ( user [ ""%"" host ] ""@"" servername )", ("msgto",
                         [Alternatives
                            [RuleReference "channel";
                             Sequence
                               [RuleReference "user";
-                               OptionalSequence (Sequence [Terminals ['%']; RuleReference "host"]);
-                               Terminals ['@']; RuleReference "servername"]]]))
+                               OptionalSequence (Sequence [REString "%"; RuleReference "host"]);
+                               REString "@"; RuleReference "servername"]]]))
                     (@"msgto      = ( user ""%"" host ) / targetmask", ("msgto",
                         [Alternatives
-                           [Sequence [RuleReference "user"; Terminals ['%']; RuleReference "host"];
+                           [Sequence [RuleReference "user"; REString "%"; RuleReference "host"];
                             RuleReference "targetmask"]]))
                     (@"msgto      = nickname / ( nickname ""!"" user ""@"" host )", ("msgto",
                         [Alternatives
                            [RuleReference "nickname";
                             Sequence
-                              [RuleReference "nickname"; Terminals ['!']; RuleReference "user";
-                               Terminals ['@']; RuleReference "host"]]]))
+                              [RuleReference "nickname"; REString "!"; RuleReference "user";
+                               REString "@"; RuleReference "host"]]]))
                     (@"channel    =  ( ""#"" / ""+"" / ( ""!"" channelid ) / ""&"" ) chanstring [ "":"" chanstring ]", ("channel",
                         [Sequence
                            [Alternatives
-                              [Terminals ['#']; Terminals ['+'];
-                               Sequence [Terminals ['!']; RuleReference "channelid"]; Terminals ['&']]];
+                              [REString "#"; REString "+";
+                               Sequence [REString "!"; RuleReference "channelid"]; REString "&"]];
                          RuleReference "chanstring";
-                         OptionalSequence (Sequence [Terminals [':']; RuleReference "chanstring"])]))
+                         OptionalSequence (Sequence [REString ":"; RuleReference "chanstring"])]))
                     (@"servername =  hostname", ("servername", [RuleReference "hostname"]))
                     (@"host       =  hostname / hostaddr", ("host", [Alternatives [RuleReference "hostname"; RuleReference "hostaddr"]]))
                     (@"hostname   =  shortname *( ""."" shortname )", ("hostname",
                         [RuleReference "shortname";
-                         Repetition (Any,Sequence [Terminals ['.']; RuleReference "shortname"])]))
+                         Repetition (Any,Sequence [REString "."; RuleReference "shortname"])]))
                     (@"shortname  =  ( letter / digit ) *( letter / digit / ""-"" ) *( letter / digit )", ("shortname",
                         [Sequence [Alternatives [RuleReference "letter"; RuleReference "digit"]];
                          Repetition
                            (Any,
                             Sequence
                               [Alternatives
-                                 [RuleReference "letter"; RuleReference "digit"; Terminals ['-']]]);
+                                 [RuleReference "letter"; RuleReference "digit"; REString "-"]]);
                          Repetition
                            (Any,Sequence [Alternatives [RuleReference "letter"; RuleReference "digit"]])]))
                     (@"hostaddr   =  ip4addr / ip6addr", ("hostaddr", [Alternatives [RuleReference "ip4addr"; RuleReference "ip6addr"]]))
                     (@"ip4addr    =  1*3digit ""."" 1*3digit ""."" 1*3digit ""."" 1*3digit", ("ip4addr",
-                        [Repetition (Between (1uy, 3uy),RuleReference "digit"); Terminals ['.'];
-                         Repetition (Between (1uy, 3uy),RuleReference "digit"); Terminals ['.'];
-                         Repetition (Between (1uy, 3uy),RuleReference "digit"); Terminals ['.'];
+                        [Repetition (Between (1uy, 3uy),RuleReference "digit"); REString ".";
+                         Repetition (Between (1uy, 3uy),RuleReference "digit"); REString ".";
+                         Repetition (Between (1uy, 3uy),RuleReference "digit"); REString ".";
                          Repetition (Between (1uy, 3uy),RuleReference "digit")]))
                     (@"ip6addr    =  1*hexdigit 7( "":"" 1*hexdigit )", ("ip6addr",
                         [Repetition (AtLeast 1uy,RuleReference "hexdigit");
                          Repetition
                            (Exactly 7uy,
                             Sequence
-                              [Terminals [':']; Repetition (AtLeast 1uy,RuleReference "hexdigit")])]))
+                              [REString ":"; Repetition (AtLeast 1uy,RuleReference "hexdigit")])]))
                     (@"ip6addr    = ""0:0:0:0:0:"" ( ""0"" / ""FFFF"" ) "":"" ip4addr", ("ip6addr",
-                        [Terminals ['0'; ':'; '0'; ':'; '0'; ':'; '0'; ':'; '0'; ':'];
-                         Sequence [Alternatives [Terminals ['0']; Terminals ['F'; 'F'; 'F'; 'F']]];
-                         Terminals [':']; RuleReference "ip4addr"]))
+                        [REString "0:0:0:0:0:";
+                         Sequence [Alternatives [REString "0"; REString "FFFF"]];
+                         REString ":"; RuleReference "ip4addr"]))
                     (@"nickname   =  ( letter / special ) *8( letter / digit / special / ""-"" )", ("nickname",
                         [Sequence [Alternatives [RuleReference "letter"; RuleReference "special"]];
                          Repetition
@@ -435,9 +434,9 @@ let rules =
                             Sequence
                               [Alternatives
                                  [RuleReference "letter"; RuleReference "digit";
-                                  RuleReference "special"; Terminals ['-']]])]))
+                                  RuleReference "special"; REString "-"]])]))
                     (@"targetmask =  ( ""$"" / ""#"" ) mask", ("targetmask",
-                        [Sequence [Alternatives [Terminals ['$']; Terminals ['#']]];
+                        [Sequence [Alternatives [REString "$"; REString "#"]];
                          RuleReference "mask"]))
                     (@"chanstring =  %x01-07 / %x08-09 / %x0B-0C / %x0E-1F / %x21-2B", ("chanstring",
                         [Alternatives
@@ -510,8 +509,7 @@ let rules =
                     (@"digit      =  %x30-39          ", ("digit", [Terminals ['0'; '1'; '2'; '3'; '4'; '5'; '6'; '7'; '8'; '9']]))
                     (@"hexdigit   =  digit / ""A"" / ""B"" / ""C"" / ""D"" / ""E"" / ""F""", ("hexdigit",
                         [Alternatives
-                           [RuleReference "digit"; Terminals ['A']; Terminals ['B']; Terminals ['C'];
-                            Terminals ['D']; Terminals ['E']; Terminals ['F']]]))
+                           [RuleReference "digit"; REString "A"; REString "B"; REString "C"; REString "D"; REString "E"; REString "F"]]))
                     (@"special    =  %x5B-60 / %x7B-7D", ("special",
                         [Alternatives
                            [Terminals ['['; '\\'; ']'; '^'; '_'; '`']; Terminals ['{'; '|'; '}']]]))
