@@ -190,9 +190,11 @@ let pRange : Parser<_> =
 do pRuleElementRef :=
     choice
         [
-            (pSequenceGroup <|> pOptionalGroup)
+            pSequenceGroup
+            pOptionalGroup
             pAlternates
-            (pTerminals <|> (pCoreRule))
+            pTerminals
+            pCoreRule
             pRuleReference
             pString
         ]
@@ -203,8 +205,10 @@ do pNotAlternatesRef :=
     .>>.
         choice
             [
-                (pSequenceGroup <|> pOptionalGroup)
-                (pTerminals <|> (pCoreRule))
+                pSequenceGroup
+                pOptionalGroup
+                pTerminals
+                pCoreRule
                 pRuleReference
                 pString
             ]
@@ -217,9 +221,11 @@ do pNotAlternatesRef :=
 do pNotSequenceRef :=
     choice
         [
-            (pSequenceGroup <|> pOptionalGroup)
+            pSequenceGroup 
+            pOptionalGroup
             pAlternates
-            (pTerminals <|> (pCoreRule))
+            pTerminals 
+            pCoreRule
             pString
         ]
     <!> "pRuleElement"
