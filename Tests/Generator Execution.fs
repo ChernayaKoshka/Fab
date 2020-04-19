@@ -49,6 +49,22 @@ let streets =
     |> List.ofSeq
 
 [<Tests>]
+let simpleStringParsing =
+    testCase "simple string parsing" (fun _ ->
+        let parser =
+            Helpers.run pRuleRecord "test = \"AbCdEfGhIjklmnopqrstuvwxYZ\""
+            |> Helpers.generateSingle
+        Helpers.expectWellFormedRegex parser
+        
+        [
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            "ABCDEFGHIJKLMNOPQRStuvwxyz"
+            "abcdefghijklmnopqrsTUVWXYZ"
+        ]
+        |> List.iter (Helpers.expectSuccessfulMatch parser)
+    )
+
+[<Tests>]
 let simpleRuleParsing =
     testList "ruleset processing" [
         testCase "single rule parsing tests (zipcode)" (fun _ ->
