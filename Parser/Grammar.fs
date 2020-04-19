@@ -159,7 +159,7 @@ let pSequenceGroup : Parser<_> =
     pBetweenWhitespace "(" ")" pSequence
     <!> "pSequenceGroup"
 
-let pRepetition : Parser<_> =
+let pRange : Parser<_> =
     [
         // 1*2
         (puint8 .>> skipChar '*' .>>. puint8 ) |>> Between
@@ -180,11 +180,6 @@ let pRepetition : Parser<_> =
     |> choice
     <!> "pRepetition"
 
-let pNotAlternatesWithRepetition =
-    pRepetition .>>. pNotAlternates
-    |>> Repetition
-    <!> "pNotAlternatesWithRepetition"
-
 //Strings, names formation
 //Comment
 //Value range
@@ -204,14 +199,19 @@ do pRuleElementRef :=
     <!> "pRuleElement"
 
 do pNotAlternatesRef :=
-    choice
-        [
-            pNotAlternatesWithRepetition
-            (pSequenceGroup <|> pOptionalGroup)
-            (pTerminals <|> (attempt pCoreRule))
-            pRuleReference
-            pString
-        ]
+    (opt pRange)
+    .>>.
+        choice
+            [
+                (pSequenceGroup <|> pOptionalGroup)
+                (pTerminals <|> (attempt pCoreRule))
+                pRuleReference
+                pString
+            ]
+    |>> (fun (range, element) ->
+        match range with
+        | Some range -> Repetition(range, element)
+        | None -> element)
     <!> "pNotAlternates"
 
 do pNotSequenceRef :=
