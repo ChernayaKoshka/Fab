@@ -40,8 +40,13 @@ let rec generate (rules : Rule list) =
     let rec generateNext (element : RuleElement) : string =
         match element with
         | REString str ->
-            // strings are case-insensitive in ABNF
-            sprintf "(?i)%s(?-i)" str
+            // strings are case-insensitive in ABNF. We can save a few characters in the resulting regular expression by checking if
+            // anything contained within is a letter. If there isn't a single letter in the string, we just return the string.
+            let escaped = realRegexEscape str
+            if String.exists Char.IsLetter str then
+                sprintf "(?i)%s(?-i)" escaped
+            else
+                escaped
         | Terminals        terminals ->
             terminals
             |> List.map (string >> realRegexEscape)
