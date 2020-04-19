@@ -192,7 +192,7 @@ do pRuleElementRef :=
         [
             (pSequenceGroup <|> pOptionalGroup)
             pAlternates
-            (pTerminals <|> (attempt pCoreRule))
+            (pTerminals <|> (pCoreRule))
             pRuleReference
             pString
         ]
@@ -204,7 +204,7 @@ do pNotAlternatesRef :=
         choice
             [
                 (pSequenceGroup <|> pOptionalGroup)
-                (pTerminals <|> (attempt pCoreRule))
+                (pTerminals <|> (pCoreRule))
                 pRuleReference
                 pString
             ]
@@ -219,7 +219,7 @@ do pNotSequenceRef :=
         [
             (pSequenceGroup <|> pOptionalGroup)
             pAlternates
-            (pTerminals <|> (attempt pCoreRule))
+            (pTerminals <|> (pCoreRule))
             pString
         ]
     <!> "pRuleElement"
@@ -237,7 +237,7 @@ let ruleMustBeDefined ruleName : Parser<_> =
 let pRuleDefinition : Parser<_> =
     sepBy1 pAlternates (pchar ' ' .>>.? notFollowedBy (anyOf [ ' '; ';' ]))
     .>>  skipWhitespace
-    .>>  ((pComment |>> ignore) <|> (followedBy ((newline |>> ignore) <|> eof)))
+    .>>  ((pComment |>> ignore) <|> (followedBy (skipNewline <|> eof)))
     <!> "pRule"
 
 let pRule : Parser<_> =
