@@ -26,9 +26,9 @@ type TerminalType =
 
 let pTerminalValueAs terminalType =
     match terminalType with
-    | Bit    -> many1Chars (anyOf BIT)    |>> (fun bits   -> char <| Convert.ToInt32(bits,    2))
-    | Digit  -> many1Chars (anyOf DIGIT)  |>> (fun digits -> char <| Convert.ToInt32(digits, 10))
-    | HexDig -> many1Chars (anyOf HEXDIG) |>> (fun hex    -> char <| Convert.ToInt32(hex,    16))
+    | Bit    -> many1Chars (anyOf CoreRules.BIT)    |>> (fun bits   -> char <| Convert.ToInt32(bits,    2))
+    | Digit  -> many1Chars (anyOf CoreRules.DIGIT)  |>> (fun digits -> char <| Convert.ToInt32(digits, 10))
+    | HexDig -> many1Chars (anyOf CoreRules.HEXDIG) |>> (fun hex    -> char <| Convert.ToInt32(hex,    16))
 
 let pTerminalType : Parser<_> =
     choice
@@ -77,10 +77,10 @@ let pTerminals : Parser<_> =
                 Reply(reply.Status, reply.Error)
     p <!> "pTerminals"
 
-let ruleChars = ALPHA @ DIGIT @ ['-'; '<'; '>']
+let ruleChars = CoreRules.ALPHA @ CoreRules.DIGIT @ ['-'; '<'; '>']
 
 let pWhitespace : Parser<_> =
-    many (anyOf WSP)
+    many (anyOf CoreRules.WSP)
     <!> "pWhitespace"
 
 let pRuleName : Parser<_> =
@@ -103,29 +103,29 @@ let pString : Parser<_> =
     <!> "pString"
 
 let pCoreRule : Parser<_> =
-    let terminals charList =
-        charList
-        |> List.map (fun c -> Terminals [c])
+    // let terminals charList =
+    //     charList
+    //     |> List.map (fun c -> Terminals [c])
 
     choice
         [
-            stringReturn "ALPHA"  (Alternatives (terminals ALPHA))
-            stringReturn "DIGIT"  (Alternatives (terminals DIGIT))
-            stringReturn "HEXDIG" (Alternatives (terminals HEXDIG))
-            stringReturn "DQUOTE" (Terminals [DQUOTE])
-            stringReturn "SP"     (Terminals [SP])
-            stringReturn "HTAB"   (Terminals [HTAB])
-            stringReturn "WSP"    (Alternatives (terminals WSP))
-            //TODO: LWSP?
-            stringReturn "VCHAR"  (Alternatives (terminals VCHAR))
-            stringReturn "CHAR"   (Alternatives (terminals CHAR))
-            stringReturn "OCTET"  (Alternatives (terminals OCTET))
-            stringReturn "CTL"    (Alternatives (terminals CTL))
-            stringReturn "CRLF"   (Terminals [CR; LF])
-            stringReturn "CR"     (Terminals [CR])
-            stringReturn "LF"     (Terminals [LF])
-            stringReturn "BIT"    (Alternatives (terminals BIT))
+            stringReturn "ALPHA" ALPHA   // (Alternatives (terminals ALPHA))
+            stringReturn "DIGIT" DIGIT   // (Alternatives (terminals DIGIT))
+            stringReturn "HEXDIG" HEXDIG // (Alternatives (terminals HEXDIG))
+            stringReturn "DQUOTE" DQUOTE // (Terminals [DQUOTE])
+            stringReturn "SP" SP         // (Terminals [SP])
+            stringReturn "HTAB" HTAB     // (Terminals [HTAB])
+            stringReturn "WSP" WSP       // (Alternatives (terminals WSP))
+            stringReturn "VCHAR" VCHAR   // (Alternatives (terminals VCHAR))
+            stringReturn "CHAR" CHAR     // (Alternatives (terminals CHAR))
+            stringReturn "OCTET" OCTET   // (Alternatives (terminals OCTET))
+            stringReturn "CTL" CTL       // (Alternatives (terminals CTL))
+            stringReturn "CRLF" CRLF     // (Terminals [CR; LF])
+            stringReturn "CR" CR         // (Terminals [CR])
+            stringReturn "LF" LF         // (Terminals [LF])
+            stringReturn "BIT" BIT       // (Alternatives (terminals BIT))
         ]
+    |>> RuleElement.CoreRule
     .>> followedBy (skipAnyOf ([ '['; ']'; '('; ')'; ' '; ';']) <|> eof <|> skipNewline)
     <!> "pCoreRule"
 
