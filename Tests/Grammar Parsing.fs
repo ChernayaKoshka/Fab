@@ -139,7 +139,7 @@ let combinations =
 
         testCase "group repetition parsing test" <|
             Helpers.parseAndCompare
-                pRuleElement
+                pAlternates
                 [
                     (@"1*2test-rule", Repetition (Between(1uy, 2uy), RuleReference "test-rule"))
                     (@"1*2""2""", Repetition (Between(1uy, 2uy), Terminals ['2']))
@@ -226,7 +226,7 @@ let rules =
                              Sequence [Alternatives [Terminals ['2']; Terminals ['3']]])]))
                 ]
 
-        testCase "complex rule parsing test" <|
+        testCase "complex rule parsing test - postal address" <|
             Helpers.parseAndCompare
                 pRule
                 [
@@ -304,7 +304,7 @@ let rules =
                                  (Exactly 4uy, CoreRule DIGIT)])]))
                 ]
 
-        testCase "complex rule parsing test 2" <|
+        testCase "complex rule parsing test - IRC" <|
             Helpers.parseAndCompare
                 pRule
                 [
