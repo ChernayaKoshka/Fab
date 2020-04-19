@@ -11,17 +11,17 @@ let zipcodeRows =
 
 let zipcodes =
     zipcodeRows
-    |> Seq.map (fun row -> row.Zipcode)
     |> Seq.take 200
+    |> Seq.map (fun row -> row.Zipcode)
     |> List.ofSeq
 
 let zipparts =
     zipcodeRows
+    |> Seq.take 200
     |> Seq.filter (fun row ->
         row.ZipCodeType.ToUpper() <> "MILITARY" &&
         not <| row.City.Contains("-") &&
         not <| row.City.Contains("/"))
-    |> Seq.take 200
     |> Seq.map (fun row ->
         sprintf "%s, %s %s\r\n" row.City row.State row.Zipcode)
     |> List.ofSeq
@@ -51,82 +51,76 @@ let streets =
 [<Tests>]
 let simpleRuleParsing =
     testList "ruleset processing" [
-        testList "single rule parsing tests (zipcode)" [
-            let parser f () =
+        testCase "single rule parsing tests (zipcode)" (fun _ ->
+            let parser =
                 Helpers.run pRuleRecord "zip-code         = 5DIGIT [\"-\" 4DIGIT]"
                 |> Helpers.generateSingle
-                |> f
-            yield! testFixture parser [
-                yield "Is Regex well-formed?", Helpers.expectWellFormedRegex
-                yield! zipcodes |> List.map (fun zipcode -> sprintf "Does it match '%s'?" zipcode, Helpers.expectSuccessfulMatch zipcode)
-            ]   
-        ]
+            Helpers.expectWellFormedRegex parser
+            zipcodes
+            |> List.iter (Helpers.expectSuccessfulMatch parser)
+        )
         testList "ruleset execution tests" [
-            Helpers.testRuleset 
-                "Simple ruleset parsing test street"
+            testCase "Simple ruleset parsing test street" <|
+                Helpers.testRuleset 
+                    """
+                    street           = [apt SP] house-num SP street-name CRLF
+                    apt              = 1*4DIGIT
+                    house-num        = 1*8(DIGIT / ALPHA)
+                    street-name      = 1*(VCHAR / SP)
+                    """
+                    "street"
+                    ("123 Main St\r\n" :: streets)
+            testCase "Simple ruleset parsing test zip-part" <|
+                Helpers.testRuleset 
+                    """
+                    zip-part         = town-name "," SP state 1*2SP zip-code CRLF
+                    town-name        = 1*(ALPHA / SP)
+                    state            = 2ALPHA
+                    zip-code         = 5DIGIT ["-" 4DIGIT]
+                    """
+                    "zip-part"
+                    ("Test Town, AL 99210\r\n" :: zipparts)
+        ]
+    ]
+
+[<Tests>]
+let backtracking =
+    testCase "Simple backtracking" (fun _ ->
+        let parser =
+                Helpers.run pRuleRecord "test = *(ALPHA) ALPHA"
+                |> Helpers.generateSingle
+        Helpers.expectWellFormedRegex parser
+        [ "ABC" ]
+        |> List.iter (Helpers.expectSuccessfulMatch parser)
+    )
+    
+[<Tests>]
+let complexRuleProcessing =
+    testList "Complex ruleset parsing test" [
+        testCase "full postal address"<|
+            Helpers.testRuleset
                 """
+                postal-address   = name-part street zip-part
+
+                name-part        = *(personal-part SP) last-name [SP suffix] CRLF
+                name-part        =/ personal-part CRLF
+
+                personal-part    = first-name / (initial ".")
+                first-name       = *ALPHA
+                initial          = ALPHA
+                last-name        = *ALPHA
+                suffix           = ("Jr." / "Sr." / 1*("I" / "V" / "X"))
+
                 street           = [apt SP] house-num SP street-name CRLF
                 apt              = 1*4DIGIT
                 house-num        = 1*8(DIGIT / ALPHA)
-                street-name      = 1*(VCHAR / SP)
-                """
-                "street"
-                ("123 Main St\r\n" :: streets)
-            Helpers.testRuleset 
-                "Simple ruleset parsing test zip-part"
-                """
+                street-name      = 1*VCHAR
+
                 zip-part         = town-name "," SP state 1*2SP zip-code CRLF
                 town-name        = 1*(ALPHA / SP)
                 state            = 2ALPHA
                 zip-code         = 5DIGIT ["-" 4DIGIT]
                 """
-                "zip-part"
-                ("Test Town, AL 99210\r\n" :: zipparts)
-        ]
-    ]
-
-
-[<Tests>]
-let backtracking =
-    testList "Simple backtracking" [
-        let parser f () =
-                Helpers.run pRuleRecord "test = *(ALPHA) ALPHA"
-                |> Helpers.generateSingle
-                |> f
-        yield! testFixture parser [
-            yield "Is Regex well-formed?", Helpers.expectWellFormedRegex
-            yield! [ "ABC" ] |> List.map (fun datum -> sprintf "Does it match '%s'?" datum, Helpers.expectSuccessfulMatch datum)
-        ]   
-    ]
-    
-
-[<Tests>]
-let complexRuleProcessing =
-    testList "Complex ruleset parsing test" [
-        Helpers.testRuleset
-            "full postal address"
-            """
-            postal-address   = name-part street zip-part
-
-            name-part        = *(personal-part SP) last-name [SP suffix] CRLF
-            name-part        =/ personal-part CRLF
-
-            personal-part    = first-name / (initial ".")
-            first-name       = *ALPHA
-            initial          = ALPHA
-            last-name        = *ALPHA
-            suffix           = ("Jr." / "Sr." / 1*("I" / "V" / "X"))
-
-            street           = [apt SP] house-num SP street-name CRLF
-            apt              = 1*4DIGIT
-            house-num        = 1*8(DIGIT / ALPHA)
-            street-name      = 1*VCHAR
-
-            zip-part         = town-name "," SP state 1*2SP zip-code CRLF
-            town-name        = 1*(ALPHA / SP)
-            state            = 2ALPHA
-            zip-code         = 5DIGIT ["-" 4DIGIT]
-            """
-            "postal-address"
-            [ "Test lastnamme Sr.\r\n123 Main St\r\nFakeTown, AA 12345\r\n" ]
+                "postal-address"
+                [ "Test lastnamme Sr.\r\n123 Main St\r\nFakeTown, AA 12345\r\n" ]
     ]

@@ -5,6 +5,7 @@ open System
 open System.Text.RegularExpressions
 open FParsec
 open Expecto
+open Expecto.FParsec
 
 let unwrap parseResult =
     match parseResult with
@@ -14,7 +15,15 @@ let unwrap parseResult =
         failwithf "%A" err
 
 let run parser =
-    runParserOnString parser [ ] ""
+    runParserOnString parser List.empty ""
+
+let parseAndCompare parser data =
+    fun () ->
+        data
+        |> List.iter (fun (input, expected) ->
+            let res = run parser input
+            Expect.isSuccess res "Did the parsing succeed?"
+            Expect.equal expected (unwrap res) "Did the result match our expected output?") 
 
 open Generator
 
@@ -42,21 +51,19 @@ let expectWellFormedRegex (str : string) =
                 false
     Expect.isTrue result "Is Regex well-formed?"
 
-let expectSuccessfulMatch (str : string) (regex : string) =
+let expectSuccessfulMatch (regex : string) (str : string) =
     let result = Regex.IsMatch(str, regex)
     Expect.isTrue result "Did Regex match successfully?"
 
-let testRuleset name (abnfString : string) testRule testData =
-    testList name [
-        let parser f () =
+let testRuleset (abnfString : string) testRule testData =
+    fun () ->
+        let parser =
             let ruleMap =
                 (abnfString.Trim())
                 |> parseAllRules
                 |> unwrap
                 |> generate
-            f ruleMap.[testRule]
-        yield! testFixture parser [
-            yield "Is Regex well-formed?", expectWellFormedRegex
-            yield! testData |> List.map (fun datum -> sprintf "Does it match '%s'?" datum, expectSuccessfulMatch datum)
-        ]
-    ]
+            ruleMap.[testRule]
+        expectWellFormedRegex parser
+        testData
+        |> List.iter (expectSuccessfulMatch parser)
