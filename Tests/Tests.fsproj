@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -10,7 +10,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions.fs" />
-    <Compile Include="Tests.fs" />
+    <Compile Include="Helpers.fs" />
+    <Compile Include="Generator Execution.fs" />
+    <Compile Include="Grammar Parsing.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>

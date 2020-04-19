@@ -1,20 +1,12 @@
 module Tests
-
+open System
+open System.Text.RegularExpressions
 open Expecto
 open Expecto.FParsec
 open Execution
 open FParsec
 open Expecto.Flip
-
-let unwrap parseResult =
-    match parseResult with
-    | Success(res, _, _) ->
-        res
-    | Failure (err, _, _) ->
-        failwithf "%A" err
-
-let run parser =
-    runParserOnString parser [ ] ""
+open Grammar
 
 [<Tests>]
 let simple =
@@ -27,9 +19,9 @@ let simple =
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "terminal parsing test: %s" str) <| fun _ ->
-                    let res = (run pTerminal str)
+                    let res = (Helpers.run pTerminal str)
                     Expect.isSuccess res "What is this field for?"
-                    Expect.equal "What is this field for?" expected (unwrap res)))
+                    Expect.equal "What is this field for?" expected (Helpers.unwrap res)))
 
         testList "terminals parsing tests"
            ([
@@ -39,9 +31,9 @@ let simple =
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "terminals parsing test: %s" str) <| fun _ ->
-                    let res = (run pTerminals str)
+                    let res = (Helpers.run pTerminals str)
                     Expect.isSuccess res "What is this field for?"
-                    Expect.equal "What is this field for?" expected (unwrap res)))
+                    Expect.equal "What is this field for?" expected (Helpers.unwrap res)))
 
         testList "terminal range parsing tests"
            ([
@@ -51,9 +43,9 @@ let simple =
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "terminal range parsing test: %s" str) <| fun _ ->
-                    let res = (run pTerminals str)
+                    let res = (Helpers.run pTerminals str)
                     Expect.isSuccess res "What is this field for?"
-                    Expect.equal "What is this field for?" expected (unwrap res)))
+                    Expect.equal "What is this field for?" expected (Helpers.unwrap res)))
 
         testList "string parsing tests"
            ([
@@ -63,9 +55,9 @@ let simple =
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "string parsing test: %s" str) <| fun _ ->
-                    let res = (run pString str)
+                    let res = (Helpers.run pString str)
                     Expect.isSuccess res "What is this field for?"
-                    Expect.equal "What is this field for?" expected (unwrap res)))
+                    Expect.equal "What is this field for?" expected (Helpers.unwrap res)))
 
         testList "repetition parsing tests"
            ([
@@ -76,9 +68,9 @@ let simple =
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "repetition parsing test: %s" str) <| fun _ ->
-                    let res = (run pRepetition str)
+                    let res = (Helpers.run pRepetition str)
                     Expect.isSuccess res "What is this field for?"
-                    Expect.equal "What is this field for?" expected (unwrap res)))
+                    Expect.equal "What is this field for?" expected (Helpers.unwrap res)))
 
         testList "core rule parsing tests"
            ([
@@ -100,9 +92,9 @@ let simple =
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "core rule parsing test: %s" str) <| fun _ ->
-                    let res = (run pCoreRule str)
+                    let res = (Helpers.run pCoreRule str)
                     Expect.isSuccess res "What is this field for?"
-                    Expect.equal "What is this field for?" expected (unwrap res)))
+                    Expect.equal "What is this field for?" expected (Helpers.unwrap res)))
     ]
 
 [<Tests>]
@@ -117,9 +109,9 @@ let groups =
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "sequence parsing test: %s" str) <| fun _ ->
-                    let res = (run pSequence str)
+                    let res = (Helpers.run pSequence str)
                     Expect.isSuccess res "What is this field for?"
-                    Expect.equal "What is this field for?" expected (unwrap res)))
+                    Expect.equal "What is this field for?" expected (Helpers.unwrap res)))
 
         testList "sequence group parsing tests"
            ([
@@ -130,9 +122,9 @@ let groups =
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "sequence group parsing test: %s" str) <| fun _ ->
-                    let res = (run pSequenceGroup str)
+                    let res = (Helpers.run pSequenceGroup str)
                     Expect.isSuccess res "What is this field for?"
-                    Expect.equal "What is this field for?" expected (unwrap res)))
+                    Expect.equal "What is this field for?" expected (Helpers.unwrap res)))
 
         testList "alternate parsing tests"
            ([
@@ -143,9 +135,9 @@ let groups =
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "alternate parsing test: %s" str) <| fun _ ->
-                    let res = (run pAlternates str)
+                    let res = (Helpers.run pAlternates str)
                     Expect.isSuccess res "What is this field for?"
-                    Expect.equal "What is this field for?" expected (unwrap res)))
+                    Expect.equal "What is this field for?" expected (Helpers.unwrap res)))
 
         testList "optional group parsing tests"
            ([
@@ -156,9 +148,9 @@ let groups =
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "optional group parsing test: %s" str) <| fun _ ->
-                    let res = (run pOptionalGroup str)
+                    let res = (Helpers.run pOptionalGroup str)
                     Expect.isSuccess res "What is this field for?"
-                    Expect.equal "What is this field for?" expected (unwrap res)))
+                    Expect.equal "What is this field for?" expected (Helpers.unwrap res)))
     ]
 
 [<Tests>]
@@ -177,9 +169,9 @@ let combinations =
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "group parsing test: %s" str) <| fun _ ->
-                    let res = (run pAlternates str)
+                    let res = (Helpers.run pAlternates str)
                     Expect.isSuccess res "What is this field for?"
-                    Expect.equal "What is this field for?" expected (unwrap res)))
+                    Expect.equal "What is this field for?" expected (Helpers.unwrap res)))
 
         testList "group repetition parsing test"
            ([
@@ -199,9 +191,9 @@ let combinations =
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "group repetition parsing test: %s" str) <| fun _ ->
-                    let res = (run pNotAlternatesWithRepetition str)
+                    let res = (Helpers.run pNotAlternatesWithRepetition str)
                     Expect.isSuccess res "What is this field for?"
-                    Expect.equal "What is this field for?" expected (unwrap res)))
+                    Expect.equal "What is this field for?" expected (Helpers.unwrap res)))
     ]
 
 [<Tests>]
@@ -234,9 +226,9 @@ let rules =
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "group repetition parsing test: %s" str) <| fun _ ->
-                    let res = (run pRule str)
+                    let res = (Helpers.run pRule str)
                     Expect.isSuccess res "What is this field for?"
-                    Expect.equal "What is this field for?" expected (unwrap res)))
+                    Expect.equal "What is this field for?" expected (Helpers.unwrap res)))
 
         testList "basic rule with repetition parsing test"
            ([
@@ -274,9 +266,9 @@ let rules =
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "basic rule with repetition parsing test: %s" str) <| fun _ ->
-                    let res = (run pRule str)
+                    let res = (Helpers.run pRule str)
                     Expect.isSuccess res "What is this field for?"
-                    Expect.equal "What is this field for?" expected (unwrap res)))
+                    Expect.equal "What is this field for?" expected (Helpers.unwrap res)))
 
         testList "complex rule parsing test"
            ([
@@ -477,9 +469,9 @@ let rules =
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "complex rule parsing test: %s" str) <| fun _ ->
-                    let res = (run pRule str)
+                    let res = (Helpers.run pRule str)
                     Expect.isSuccess res "What is this field for?"
-                    Expect.equal "What is this field for?" expected (unwrap res)))
+                    Expect.equal "What is this field for?" expected (Helpers.unwrap res)))
 
         testList "complex rule parsing test 2"
            ([
@@ -726,14 +718,14 @@ let rules =
             ]
             |> List.map (fun (str, expected) ->
                 testCase (sprintf "complex rule parsing test: %s" str) <| fun _ ->
-                    let res = (run pRule str)
+                    let res = (Helpers.run pRule str)
                     Expect.isSuccess res "What is this field for?"
-                    Expect.equal "What is this field for?" expected (unwrap res)))
+                    Expect.equal "What is this field for?" expected (Helpers.unwrap res)))
     ]
 
 [<Tests>]
 let execution =
-    testList "rule element execution tests" [
+    ptestList "rule element execution tests" [
         testList "terminal execution test"
            ([
                 (Terminals [ 'a'; 'b'; 'c' ], { Text = "abc"; Pos = 0 },(true, { Text = "abc"; Pos = 3 }))
@@ -898,183 +890,3 @@ let execution =
                     let res = matchElements [] ruleStream [element]
                     Expect.equal "What is this field for?" expected res))
     ]
-
-open FSharp.Data
-type ZIPCodeList = CsvProvider< @"..\Samples\free-zipcode-database-Primary.csv", Schema="Zipcode=string" >
-
-let zipcodeRows =
-    ZIPCodeList.GetSample().Rows
-
-let zipcodes =
-    zipcodeRows
-    |> Seq.map (fun row -> row.Zipcode)
-    |> Seq.take 200
-    |> List.ofSeq
-
-let zipparts =
-    zipcodeRows
-    |> Seq.filter (fun row ->
-        row.ZipCodeType.ToUpper() <> "MILITARY" &&
-        not <| row.City.Contains("-") &&
-        not <| row.City.Contains("/"))
-    |> Seq.take 200
-    |> Seq.map (fun row ->
-        sprintf "%s, %s %s\r\n" row.City row.State row.Zipcode)
-    |> List.ofSeq
-
-(*
-    Retrieved From https://catalog.data.gov/dataset/addresses
-    Resource Type Dataset
-    Metadata Created Date February 10, 2017
-    Metadata Updated Date April 5, 2019
-    Publisher City of Chesapeake, VA
-    Unique Identifier http://public-chesva.opendata.arcgis.com/datasets/b469c77f314242a0a602075e936d2ea7_18
-    Maintainer Virginia Fowler
-    Maintainer Email gisteam@cityofchesapeake.net
-    License https://hub.arcgis.com/api/v2/datasets/b469c77f314242a0a602075e936d2ea7_18/license
-*)
-type AddressList = CsvProvider< @"..\Samples\Addresses.csv", InferRows = 0, IgnoreErrors = true >
-
-let addressRows = AddressList.GetSample().Rows
-
-let streets =
-    addressRows
-    |> Seq.take 200
-    |> Seq.map (fun row -> row.ADDRESS + "\r\n")
-    |> Seq.distinct
-    |> List.ofSeq
-    // |> Seq.filter (fun row ->
-    //     // some addresses appear to be missing house number.
-    //     // The postal address parser from https://en.wikipedia.org/wiki/Augmented_Backus%E2%80%93Naur_form isn't exactly bulletproof
-    //     // so we'll give it a little help
-    //     Regex.IsMatch(row.ADDRESS, "^\d"))
-    // |> Seq.map (fun row ->
-    //     if row.USE_ = "Apartments" then
-    //         if Regex.IsMatch(row.UNITS, "^\d+$") then
-    //             sprintf "%s %s\r\n" row.UNITS row.ADDRESS
-    //         else
-    //             row.ADDRESS + "\r\n"
-    //     else
-    //         row.ADDRESS + "\r\n")
-    // |> Seq.distinct
-    // |> List.ofSeq
-
-[<Tests>]
-let simpleRuleParsing =
-
-    testList "ruleset processing" [
-        testList "single rule parsing tests (zipcode)"(
-            "12345-6789" :: zipcodes
-            |> List.map (fun input ->
-                testCase input <| fun _ ->
-                    let parser =
-                        run pRuleRecord "zip-code         = 5DIGIT [\"-\" 4DIGIT]"
-                        |> unwrap
-                    let (result, actual) = matchElements [] { Text = input; Pos = 0 } parser.Definition
-                    Expect.isTrue "What's this field for?" result
-                    Expect.equal "What is this field for?" { Text = input; Pos = input.Length } actual ))
-        testList "ruleset execution tests" [
-            testList "Simple ruleset parsing test street" (
-                let testStr =
-                    """
-                    street           = [apt SP] house-num SP street-name CRLF
-                    apt              = 1*4DIGIT
-                    house-num        = 1*8(DIGIT / ALPHA)
-                    street-name      = 1*(VCHAR / SP)
-                    """.Trim()
-                let rules =
-                    testStr
-                    |> parseAllRules
-                    |> unwrap
-                let startDefintion = (findRule rules "street").Definition
-                "123 Main St\r\n" :: streets
-                |> List.map (fun input ->
-                    testCase input  <| fun _ ->
-                        let (executionResult, remaining) = matchElements rules { Text = input; Pos = 0 } startDefintion
-                        Expect.isTrue "What is this field for?" executionResult
-                        Expect.equal "What is this field for?" { Text = input; Pos = input.Length } remaining)
-            )
-            testList "Simple ruleset parsing test zip-part" (
-                let testStr =
-                    """
-                    zip-part         = town-name "," SP state 1*2SP zip-code CRLF
-                    town-name        = 1*(ALPHA / SP)
-                    state            = 2ALPHA
-                    zip-code         = 5DIGIT ["-" 4DIGIT]
-                    """.Trim()
-                let rules =
-                    testStr
-                    |> parseAllRules
-                    |> unwrap
-                let startDefintion = (findRule rules "zip-part").Definition
-                //printfn "%A" rules
-                "Test Town, AL 99210\r\n" :: zipparts
-                |> List.map (fun input ->
-                    testCase input  <| fun _ ->
-                        let (executionResult, remaining) = matchElements rules { Text = input; Pos = 0 } startDefintion
-                        Expect.isTrue "What is this field for?" executionResult
-                        Expect.equal "What is this field for?" { Text = input; Pos = input.Length } remaining)
-            )
-        ]
-
-    ]
-
-[<Tests>]
-let backtracking =
-    testList "Simply greedy backtracking" (
-        let testStr =
-            """
-            test = *(ALPHA) ALPHA
-            """.Trim()
-        let rules =
-            testStr
-            |> parseAllRules
-            |> unwrap
-        let startDefintion = (findRule rules "test").Definition
-        //printfn "%A" rules
-        [ "ABC" ]
-        |> List.map (fun input ->
-            testCase input  <| fun _ ->
-                let (executionResult, remaining) = matchElements rules { Text = input; Pos = 0 } startDefintion
-                Expect.isTrue "What is this field for?" executionResult
-                Expect.equal "What is this field for?" { Text = input; Pos = input.Length } remaining)
-    )
-[<Tests>]
-let complexRuleProcessing =
-    testList "Complex ruleset parsing test" (
-        let testStr =
-            """
-            postal-address   = name-part street zip-part
-
-            name-part        = *(personal-part SP) last-name [SP suffix] CRLF
-            name-part        =/ personal-part CRLF
-
-            personal-part    = first-name / (initial ".")
-            first-name       = *ALPHA
-            initial          = ALPHA
-            last-name        = *ALPHA
-            suffix           = ("Jr." / "Sr." / 1*("I" / "V" / "X"))
-
-            street           = [apt SP] house-num SP street-name CRLF
-            apt              = 1*4DIGIT
-            house-num        = 1*8(DIGIT / ALPHA)
-            street-name      = 1*VCHAR
-
-            zip-part         = town-name "," SP state 1*2SP zip-code CRLF
-            town-name        = 1*(ALPHA / SP)
-            state            = 2ALPHA
-            zip-code         = 5DIGIT ["-" 4DIGIT]
-            """.Trim()
-        let rules =
-            testStr
-            |> parseAllRules
-            |> unwrap
-        let startDefintion = (findRule rules "postal-address").Definition
-        //printfn "%A" rules
-        ["Test lastnamme Sr.\r\n123 Main St\r\nFakeTown, AA 12345\r\n"]
-        |> List.map (fun input ->
-            testCase input  <| fun _ ->
-                let (executionResult, remaining) = matchElements rules { Text = input; Pos = 0 } startDefintion
-                Expect.isTrue "What is this field for?" executionResult
-                Expect.equal "What is this field for?" { Text = input; Pos = input.Length } remaining)
-    )
