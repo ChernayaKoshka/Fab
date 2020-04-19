@@ -78,13 +78,14 @@ let pTerminals : Parser<_> =
     p <!> "pTerminals"
 
 let ruleChars = CoreRules.ALPHA @ CoreRules.DIGIT @ ['-'; '<'; '>']
+let pRuleChar = anyOf ruleChars
 
 let skipWhitespace : Parser<_> =
     skipMany (anyOf CoreRules.WSP)
     <!> "pWhitespace"
 
 let pRuleName : Parser<_> =
-    many1Chars (anyOf ruleChars)
+    many1Chars pRuleChar
     <!> "pRuleName"
 
 let pRuleReference : Parser<_> =
@@ -98,7 +99,7 @@ let pComment : Parser<_> =
     <!> "pComment"
 
 let pString : Parser<_> =
-    (pchar '"') >>. (many1Till anyChar (pchar '"'))
+    between (pchar '"') (pchar '"') (many (noneOf [ '"' ]))
     |>> Terminals
     <!> "pString"
 
@@ -122,7 +123,8 @@ let pCoreRule : Parser<_> =
             stringReturn "BIT" BIT       // (Alternatives (terminals BIT))
         ]
     |>> RuleElement.CoreRule
-    .>> followedBy (skipAnyOf ([ '['; ']'; '('; ')'; ' '; ';']) <|> eof <|> skipNewline)
+    // Prevent parsing parts of a rule reference by mistake (ex: SPOON, where SP would be parsed as a CoreRule by mistake)
+    .>>? notFollowedBy pRuleChar
     <!> "pCoreRule"
 
 let (pRuleElement, pRuleElementRef) : (Parser<RuleElement> * Parser<RuleElement> ref) = createParserForwardedToRef()
