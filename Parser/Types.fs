@@ -33,6 +33,7 @@ type CoreRule =
     | BIT
 
 type RuleElement =
+    | REString           of string
     | Terminals        of Terminal list   // %x20, %x20.21, %x20-21
     | CoreRule         of CoreRule
     | Alternatives     of RuleElement list    // %x20 / %x21
@@ -43,6 +44,7 @@ type RuleElement =
     with
         override this.ToString() =
             match this with
+            | REString str -> sprintf "String(%s)" str
             | Terminals terms -> sprintf "Terminals [%d..%d]" (int terms.[terms.Length-1]) (int terms.[0])
             | CoreRule rule -> rule.ToString()
             | Alternatives elems -> sprintf "Alternatives: %s" ((sprintf "%O" elems).Replace("\r", "").Replace("\n", "  "))
