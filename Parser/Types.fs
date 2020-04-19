@@ -14,8 +14,27 @@ type Range =
     | Exactly of uint8
     | Between of (uint8 * uint8)
 
+type CoreRule =
+    | ALPHA
+    | DIGIT
+    | HEXDIG
+    | DQUOTE
+    | SP
+    | HTAB
+    | WSP
+    | CR
+    | LF
+    | CRLF
+    | LWSP
+    | VCHAR
+    | CHAR
+    | OCTET
+    | CTL
+    | BIT
+
 type RuleElement =
     | Terminals        of Terminal list   // %x20, %x20.21, %x20-21
+    | CoreRule         of CoreRule
     | Alternatives     of RuleElement list    // %x20 / %x21
     | OptionalSequence of RuleElement         // [optional]
     | Sequence         of RuleElement list    // a b c or (%20 %21)
