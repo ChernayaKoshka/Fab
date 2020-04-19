@@ -29,13 +29,18 @@ let validGroupNameCharacters = ['A'..'Z'] @ ['a'..'z'] @ [ '_' ]
 
 let concatRules = String.concat ""
 let concatAlternates = String.concat "|" >> sprintf "(?:%s)"
-
+let realRegexEscape str =
+    let escaped = Regex.Escape str
+    escaped
+        .Replace("]", "\]")
+        .Replace("}", "\}")
+        .Replace("/", "\/")
 let rec generate (rules : Rule list) =
     let rec generateNext (element : RuleElement) : string =
         match element with
         | Terminals        terminals ->
             terminals
-            |> List.map (string >> Regex.Escape)
+            |> List.map (string >> realRegexEscape)
             |> concatRules
         | Alternatives     elements ->
             if List.forall (fun e ->
