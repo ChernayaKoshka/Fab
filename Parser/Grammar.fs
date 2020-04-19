@@ -79,8 +79,8 @@ let pTerminals : Parser<_> =
 
 let ruleChars = CoreRules.ALPHA @ CoreRules.DIGIT @ ['-'; '<'; '>']
 
-let pWhitespace : Parser<_> =
-    many (anyOf CoreRules.WSP)
+let skipWhitespace : Parser<_> =
+    skipMany (anyOf CoreRules.WSP)
     <!> "pWhitespace"
 
 let pRuleName : Parser<_> =
@@ -103,10 +103,6 @@ let pString : Parser<_> =
     <!> "pString"
 
 let pCoreRule : Parser<_> =
-    // let terminals charList =
-    //     charList
-    //     |> List.map (fun c -> Terminals [c])
-
     choice
         [
             stringReturn "ALPHA" ALPHA   // (Alternatives (terminals ALPHA))
@@ -137,60 +133,50 @@ let pSequence : Parser<_> =
     |>> Sequence
     <!> "pSequence"
 
+let pBetweenWhitespace openStr closeStr parser : Parser<_> =
+    between (skipString openStr) (skipString closeStr) (skipWhitespace >>. parser .>> skipWhitespace)
+
 let pOptionalGroup : Parser<_> =
-    between (pchar '[' .>> pWhitespace) (pWhitespace >>. pchar ']') pSequence
+    pBetweenWhitespace "[" "]" pSequence
     |>> OptionalSequence
     <!> "pOptionalGroup"
 
+let pAlternateSeparator : Parser<_> =
+    skipWhitespace >>? skipChar '/' .>> skipWhitespace
+
 let (pNotAlternates, pNotAlternatesRef) : (Parser<RuleElement> * Parser<RuleElement> ref) = createParserForwardedToRef()
 let pAlternates : Parser<_> =
-    let p =
-        fun stream ->
-            let reply = sepBy1 pNotAlternates (pWhitespace >>? (pchar '/') >>. pWhitespace) stream
-            if reply.Status = ReplyStatus.Ok then
-                let result =
-                    match reply.Result with
-                    | [ element ] -> element
-                    | alternatives -> Alternatives alternatives
-                Reply(result)
-            else
-                Reply(reply.Status, reply.Error)
-    p <!> "pAlternates"
+    sepBy1 pNotAlternates pAlternateSeparator
+    |>> (fun result ->
+        match result with
+        | [ element ] -> element
+        | alternatives -> Alternatives alternatives)
+    <!> "pAlternates"
 
 let pSequenceGroup : Parser<_> =
-    between (pchar '(' .>> pWhitespace) (pWhitespace >>. pchar ')') pSequence
+    pBetweenWhitespace "(" ")" pSequence
     <!> "pSequenceGroup"
 
 let pRepetition : Parser<_> =
-    let p : Parser<_> =
-        fun stream ->
-            let reply =
-                (tuple3
-                    (opt puint8)
-                    (opt (pchar '*'))
-                    (opt puint8)) stream
-            if reply.Status = ReplyStatus.Ok then
-                match reply.Result with
-                // 1
-                | (Some startNum, None  , None) ->
-                    Reply(Exactly startNum)
-                // 1*
-                | (Some num,      Some _, None) ->
-                    Reply(AtLeast num)
-                // 1*2
-                | (Some startNum, Some _, Some endNum) ->
-                    Reply(Between(startNum, endNum))
-                //  *2
-                | (None         , Some _, Some endNum) ->
-                    Reply(AtMost endNum)
-                //  *
-                | (None         , Some _, None) ->
-                    Reply(Any)
-                | _ ->
-                    Reply(ReplyStatus.Error, ErrorMessageList(Expected("String in format of 2, 2*4, *4, *")))
-            else
-                Reply(reply.Status, reply.Error)
-    p <!> "pRepetition"
+    [
+        // 1*2
+        (puint8 .>> skipChar '*' .>>. puint8 ) |>> Between
+
+        // *2
+        (skipChar '*' >>. puint8) |>> AtMost
+
+        // 1*
+        (puint8 .>> skipChar '*') |>> AtLeast
+
+        // *
+        charReturn '*' Any
+
+        // 1
+        (puint8) |>> Exactly
+    ]
+    |> List.map attempt
+    |> choice
+    <!> "pRepetition"
 
 let pNotAlternatesWithRepetition =
     pRepetition .>>. pNotAlternates
@@ -243,28 +229,29 @@ let addRule (definition : Rule) : Parser<_> =
 let ruleMustBeDefined ruleName : Parser<_> =
     (userStateSatisfies (List.contains ruleName)
     >>% ruleName)
-    <?> sprintf "%s was not defined prior to this point." ruleName
+    <?> sprintf "'%s' was not defined prior to this point." ruleName
+
 
 let pRuleDefinition : Parser<_> =
     sepBy1 pAlternates (pchar ' ' .>>.? notFollowedBy (anyOf [ ' '; ';' ]))
-    .>>  pWhitespace
+    .>>  skipWhitespace
     .>>  ((pComment |>> ignore) <|> (followedBy ((newline |>> ignore) <|> eof)))
     <!> "pRule"
 
 let pRule : Parser<_> =
     pRuleName
-    .>>  pWhitespace
+    .>>  skipWhitespace
     .>>  pchar '='
-    .>>?  pWhitespace
+    .>>?  skipWhitespace
     .>>.? pRuleDefinition
     <!> "pRule"
 
 let pAlternateRule : Parser<_> =
     pRuleName
     >>= ruleMustBeDefined
-    .>>  pWhitespace
+    .>>  skipWhitespace
     .>>  pstring "=/"
-    .>>  pWhitespace
+    .>>  skipWhitespace
     .>>. pRuleDefinition
     <!> "pAlternateRule"
 
