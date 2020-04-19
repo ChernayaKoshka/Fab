@@ -118,6 +118,12 @@ let groups =
                     (@"[%d1 %d2 %d3]", OptionalSequence (Sequence [Terminals ['\001']; Terminals ['\002']; Terminals ['\003']]))
                     (@"[""1"" ""2"" ""3""]", OptionalSequence (Sequence [Terminals ['1']; Terminals ['2']; Terminals ['3']]))
                 ]
+        testCase "groups containing rule references tests" <|
+            Helpers.parseAndCompare
+                pSequenceGroup
+                [
+                    ("(rule-ref another-rule-ref DIGIT)", Sequence [ RuleReference "rule-ref"; RuleReference "another-rule-ref"; CoreRule DIGIT ])
+                ]
     ]
 
 [<Tests>]
