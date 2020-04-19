@@ -64,7 +64,6 @@ let rec generate (rules : Rule list) =
             |> List.map generateNext
             |> concatRules
             |> sprintf "(?:%s)"
-        // I know, I know. Imperative BS. But, I'm lazy and it was easier this way ¯\_(ツ)_/¯
         | Repetition       (range, element) ->
             let makeRange str =
                 match range with
