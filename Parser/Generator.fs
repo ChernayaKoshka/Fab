@@ -39,6 +39,9 @@ let realRegexEscape str =
 let rec generate (rules : Rule list) =
     let rec generateNext (element : RuleElement) : string =
         match element with
+        | REString str ->
+            // strings are case-insensitive in ABNF
+            sprintf "(?i)%s(?-i)" str
         | Terminals        terminals ->
             terminals
             |> List.map (string >> realRegexEscape)
