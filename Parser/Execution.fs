@@ -1,5 +1,5 @@
+[<System.Obsolete("Replaced with Regex generator, this implementation has issues with backtracking")>]
 module Execution
-open FParsec
 let findRule (rules : Rule list) name =
     let definitions =
         rules
@@ -147,8 +147,4 @@ let rec matchElements (rules : Rule list) (str : RuleStream) (elements : RuleEle
             else
                 (success, index, doneParsing, rs)) (true, 0, false, str)
     (success, rs)
-
-//let process (rules : Rule list) (rulename : string) (text : string) =
-//    let startingRule = findRule rules rulename
-//    matchElement rules { Text = text; Pos = 0 } startingRule.Definition
 
