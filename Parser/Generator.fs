@@ -63,12 +63,12 @@ let rec generate (rules : Rule list) =
         | Repetition       (range, element) ->
             let makeRange str =
                 match range with
-                | Any                -> sprintf "%s*" str
-                | AtLeast 1uy        -> sprintf "%s+" str
-                | AtLeast atLeast    -> sprintf "%s{%d,}" str atLeast
-                | AtMost atMost      -> sprintf "%s{,%d}" str atMost
+                | Any                -> sprintf "%s*?" str
+                | AtLeast 1uy        -> sprintf "%s+?" str
+                | AtLeast atLeast    -> sprintf "%s{%d,}?" str atLeast
+                | AtMost atMost      -> sprintf "%s{0,%d}?" str atMost
                 | Exactly exactly    -> sprintf "%s{%d}" str exactly
-                | Between (min, max) -> sprintf "%s{%d,%d}" str min max
+                | Between (min, max) -> sprintf "%s{%d,%d}?" str min max
 
             element
             |> generateNext
@@ -89,5 +89,5 @@ let rec generate (rules : Rule list) =
     // handling duplicate rules / alternate rule cases
     |> List.groupBy fst
     |> List.map (fun (name, rules) ->
-        (name, rules |> List.map snd |> concatAlternates))
+        (name, rules |> List.map snd |> concatAlternates |> sprintf "^%s$"))
     |> Map.ofList
