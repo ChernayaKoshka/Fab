@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Grammar
+module Fab.Grammar
 open FParsec
 open System
 

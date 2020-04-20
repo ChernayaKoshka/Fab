@@ -1,4 +1,4 @@
-﻿module Generator
+﻿module Fab.Generator
 
 open System
 open System.Text.RegularExpressions

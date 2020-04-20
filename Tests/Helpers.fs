@@ -28,8 +28,9 @@ let parseAndCompare parser data =
             let unwrapped = unwrap res
             sprintf "The parsed result of '%s' was not expected!" input
             |> Expect.equal unwrapped expected) 
-
-open Generator
+            
+open Fab
+open Fab.Generator
 
 let generateSingle ( res : ParserResult<Rule, RuleName list> ) =
     res

@@ -2,7 +2,7 @@
 
 open FSharp.Data
 open Expecto
-open Grammar
+open Fab
 
 type ZIPCodeList = CsvProvider< @"..\Samples\free-zipcode-database-Primary.csv", Schema="Zipcode=string" >
 

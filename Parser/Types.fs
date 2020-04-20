@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Types
+module Fab.Types
 
 open FParsec
 

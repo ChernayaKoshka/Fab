@@ -1,5 +1,5 @@
 [<RequireQualifiedAccess>]
-module CoreRules
+module Fab.CoreRules
 
 open FParsec
 

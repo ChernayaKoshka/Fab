@@ -1,7 +1,7 @@
 module Tests
 
 open Expecto
-open Grammar
+open Fab
 
 [<Tests>]
 let simple =
