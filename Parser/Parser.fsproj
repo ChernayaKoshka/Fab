@@ -10,7 +10,6 @@
     <Compile Include="Types.fs" />
     <Compile Include="Core Rules.fs" />
     <Compile Include="Grammar.fs" />
-    <Compile Include="Execution.fs" />
     <Compile Include="Generator.fs" />
   </ItemGroup>
   <ItemGroup>
