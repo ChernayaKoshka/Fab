@@ -1,0 +1,5 @@
+{
+    "$schema": "https://raw.githubusercontent.com/fsprojects/fantomas/master/src/Fantomas/schema.json",
+    "PageWidth":60,
+    "IndentSpaceNum":4
+}
