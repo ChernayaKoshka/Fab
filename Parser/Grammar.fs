@@ -17,7 +17,9 @@ let (<!>) (p: Parser<_>) label : Parser<_> =
             printfn "|%s|" (stream.PeekString(int stream.Column + int stream.IndexOfLastCharPlus1))
             reply
 
-let pSpace = pchar ' '
+let pSpace = 
+    pchar ' '
+    <!> "pSpace"
 
 type TerminalType =
     | Bit
@@ -29,6 +31,7 @@ let pTerminalValueAs terminalType =
     | Bit    -> many1Chars (anyOf CoreRules.BIT)    |>> (fun bits   -> char <| Convert.ToInt32(bits,    2))
     | Digit  -> many1Chars (anyOf CoreRules.DIGIT)  |>> (fun digits -> char <| Convert.ToInt32(digits, 10))
     | HexDig -> many1Chars (anyOf CoreRules.HEXDIG) |>> (fun hex    -> char <| Convert.ToInt32(hex,    16))
+    <!> "pTerminalValueAs"
 
 let pTerminalType : Parser<_> =
     choice
@@ -37,6 +40,7 @@ let pTerminalType : Parser<_> =
             (pchar 'd' >>. preturn Digit)
             (pchar 'x' >>. preturn HexDig)
         ]
+    <!> "pTerminalType"
 
 let pTerminal : Parser<_> =
     let p =
@@ -50,7 +54,9 @@ let pTerminal : Parser<_> =
                     Reply(reply'.Status, reply'.Error)
             else
                 Reply(reply.Status, reply.Error)
-    p <!> "pTerminal"
+    p 
+    <!> "pTerminal"
+    <?> "pTerminal"
 
 let pTerminals : Parser<_> =
     let p =
@@ -75,33 +81,43 @@ let pTerminals : Parser<_> =
                     Reply(reply'.Status, reply'.Error)
             else
                 Reply(reply.Status, reply.Error)
-    p <!> "pTerminals"
+    p 
+    <!> "pTerminals"
+    <?> "pTerminals"
 
 let ruleChars = CoreRules.ALPHA @ CoreRules.DIGIT @ ['-'; '<'; '>']
-let pRuleChar = anyOf ruleChars
+let pRuleChar = 
+    anyOf ruleChars
+    <!> "pRuleChar"
+
 
 let skipWhitespace : Parser<_> =
     skipMany (anyOf CoreRules.WSP)
     <!> "pWhitespace"
+    <?> "skipWhitespace"
 
 let pRuleName : Parser<_> =
     many1Chars pRuleChar
     <!> "pRuleName"
+    <?> "pRuleName"
 
 let pRuleReference : Parser<_> =
     pRuleName
     |>> RuleReference
     <!> "pRuleReference"
+    <?> "pRuleReference"
 
 let pComment : Parser<_> =
     pchar ';'
     >>. restOfLine false
     <!> "pComment"
+    <?> "pComment"
 
 let pString : Parser<_> =
     between (pchar '"') (pchar '"') (manyChars (noneOf [ '"' ]))
     |>> REString
     <!> "pString"
+    <?> "pString"
 
 let pCoreRule : Parser<_> =
     choice
@@ -126,15 +142,20 @@ let pCoreRule : Parser<_> =
     // Prevent parsing parts of a rule reference by mistake (ex: SPOON, where SP would be parsed as a CoreRule by mistake)
     .>>? notFollowedBy pRuleChar
     <!> "pCoreRule"
+    <?> "pCoreRule"
 
 
 let pBetweenWhitespace openStr closeStr parser : Parser<_> =
     between (skipString openStr) (skipString closeStr) (skipWhitespace >>. parser .>> skipWhitespace)
+    <?> "pBetweenWhitespace"
 
 let pAlternateSeparator : Parser<_> =
     skipWhitespace >>? skipChar '/' .>> skipWhitespace
-
+    <?> "pAlternateSeparator"
+    
 let (pNotAlternates, pNotAlternatesRef) : (Parser<RuleElement> * Parser<RuleElement> ref) = createParserForwardedToRef()
+let (pNotSequence, pNotSequenceRef) : (Parser<RuleElement> * Parser<RuleElement> ref) = createParserForwardedToRef()
+
 let pAlternates : Parser<_> =
     sepBy1 pNotAlternates pAlternateSeparator
     |>> (fun result ->
@@ -142,20 +163,28 @@ let pAlternates : Parser<_> =
         | [ element ] -> element
         | alternatives -> Alternatives alternatives)
     <!> "pAlternates"
+    <?> "pAlternates"
     
 let pSequence : Parser<_> =
-    sepEndBy1 pAlternates pSpace
-    |>> Sequence
+    sepEndBy1 pNotSequence pSpace
+    |>> (fun sequence ->
+        match sequence with
+        | [ single ] -> single
+        | multiple ->
+            Sequence multiple)
     <!> "pSequence"
+    <?> "pSequence"
     
 let pOptionalGroup : Parser<_> =
-    pBetweenWhitespace "[" "]" pSequence
+    pBetweenWhitespace "[" "]" pAlternates
     |>> OptionalSequence
     <!> "pOptionalGroup"
+    <?> "pOptionalGroup"
 
 let pSequenceGroup : Parser<_> =
-    pBetweenWhitespace "(" ")" pSequence
+    pBetweenWhitespace "(" ")" pAlternates
     <!> "pSequenceGroup"
+    <?> "pSequenceGroup"
 
 let pRange : Parser<_> =
     [
@@ -177,6 +206,30 @@ let pRange : Parser<_> =
     |> List.map attempt
     |> choice
     <!> "pRepetition"
+    <?> "pRepetition"
+
+let pWithRange parser =
+    (opt pRange)
+    .>>.? parser
+    |>> (fun (range, element) ->
+        match range with
+        | Some range -> Repetition(range, element)
+        | None -> element)
+    <!> "pWithRange"
+    <?> "pWithRange"
+
+do pNotSequenceRef :=
+    choice
+        [
+            pOptionalGroup
+            pSequenceGroup
+            pString
+            pTerminals
+            pCoreRule
+            pRuleReference
+        ]
+    |> pWithRange
+    <!> "pNotSequence"
 
 //Strings, names formation
 //Comment
@@ -186,21 +239,17 @@ let pRange : Parser<_> =
 //Concatenation
 //Alternative
 do pNotAlternatesRef :=
-    (opt pRange)
-    .>>.
-        choice
-            [
-                pString
-                pTerminals
-                pCoreRule
-                pRuleReference
-                pOptionalGroup
-                pSequenceGroup
-            ]
-    |>> (fun (range, element) ->
-        match range with
-        | Some range -> Repetition(range, element)
-        | None -> element)
+    pSequence
+    <|> (choice
+             [
+                 pOptionalGroup
+                 pSequenceGroup
+                 pString
+                 pTerminals
+                 pCoreRule
+                 pRuleReference
+             ]
+         |> pWithRange)
     <!> "pNotAlternates"
 
 let addRule (definition : Rule) : Parser<_> =
@@ -218,6 +267,7 @@ let pRuleDefinition : Parser<_> =
     .>>  skipWhitespace
     .>>  ((pComment |>> ignore) <|> (followedBy (skipNewline <|> eof)))
     <!> "pRule"
+    <?> "pRule"
 
 let pRule : Parser<_> =
     pRuleName
@@ -226,6 +276,7 @@ let pRule : Parser<_> =
     .>>?  skipWhitespace
     .>>.? pRuleDefinition
     <!> "pRule"
+    <?> "pRule"
 
 let pAlternateRule : Parser<_> =
     pRuleName
@@ -235,16 +286,19 @@ let pAlternateRule : Parser<_> =
     .>>  skipWhitespace
     .>>. pRuleDefinition
     <!> "pAlternateRule"
+    <?> "pAlternateRule"
 
 let pRuleRecord : Parser<_> =
     (pRule <|> pAlternateRule)
     |>> (fun (name, elements) ->
         { RuleName = name; Definition = elements })
     >>= addRule
+    <?> "pRuleRecord"
 
 let pDocument : Parser<_> =
     many1Till (pRuleRecord .>> (many (newline <|> pSpace))) eof
     <!> "pDocument"
+    <?> "pDocument"
 
 let parseAllRules (text : string) =
     runParserOnString pDocument [ ] "" text
