@@ -1,8 +1,6 @@
 ﻿module Generator
 
-open FParsec
 open System
-open System.Text
 open System.Text.RegularExpressions
 
 let findRule (rules : Rule list) name =
@@ -37,6 +35,7 @@ let realRegexEscape str =
         .Replace("/", "\/")
 
 let rec generate (rules : Rule list) =
+    let cachedDefinitions = new System.Collections.Generic.Dictionary<RuleName, string>()
     let rec generateNext (element : RuleElement) : string =
         match element with
         | REString str ->
@@ -105,18 +104,29 @@ let rec generate (rules : Rule list) =
             |> generateNext
             |> makeRange
         | RuleReference    name ->
-            let groupName =
-                name
-                |> String.map (fun c ->
-                    if validGroupNameCharacters |> List.contains c then c else '_')
-            // would seriously benefit from memoization, but...
-            (findRule rules name).Definition
-            |> List.map generateNext
-            |> concatRules
-            |> sprintf "(?'%s'%s)" groupName
+            match cachedDefinitions.TryGetValue(name.ToUpper()) with
+            | (true, cachedExpression) -> 
+                cachedExpression
+            | (false, _) ->
+                let groupName =
+                    name
+                    |> String.map (fun c ->
+                        if validGroupNameCharacters |> List.contains c then c else '_')
+                // would seriously benefit from memoization, but...
+                let generated =
+                    (findRule rules name).Definition
+                    |> List.map generateNext
+                    |> concatRules
+                    |> sprintf "(?'%s'%s)" groupName
+                cachedDefinitions.Add(name.ToUpper(), generated)
+                generated
+
     rules
     |> List.rev // makes it easier to ignore rule definition order
-    |> List.map (fun rule -> rule.RuleName, rule.Definition |> List.map generateNext |> concatRules)
+    |> List.map (fun rule -> 
+        match cachedDefinitions.TryGetValue(rule.RuleName.ToUpper()) with
+        | (true, cached) -> rule.RuleName, cached
+        | (false, _) -> rule.RuleName, rule.Definition |> List.map generateNext |> concatRules)
     // handling duplicate rules / alternate rule cases
     |> List.groupBy fst
     |> List.map (fun (name, rules) ->
