@@ -22,8 +22,12 @@ let parseAndCompare parser data =
         data
         |> List.iter (fun (input, expected) ->
             let res = run parser input
-            Expect.isSuccess res "Did the parsing succeed?"
-            Expect.equal expected (unwrap res) "Did the result match our expected output?") 
+            sprintf "The parsing of '%s' did not succeed!" input
+            |> Expect.isSuccess res 
+            
+            let unwrapped = unwrap res
+            sprintf "The parsed result of '%s' was not expected!" input
+            |> Expect.equal unwrapped expected) 
 
 open Generator
 
@@ -49,11 +53,13 @@ let expectWellFormedRegex (str : string) =
             with
             | :? ArgumentException ->
                 false
-    Expect.isTrue result "Is Regex well-formed?"
+    sprintf "The regular expression '%s' was not well-formed!" str
+    |> Expect.isTrue result
 
 let expectSuccessfulMatch (regex : string) (str : string) =
     let result = Regex.IsMatch(str, regex)
-    Expect.isTrue result "Did Regex match successfully?"
+    sprintf "'%s' did not match '%s'" regex str
+    |> Expect.isTrue result
 
 let testRuleset (abnfString : string) testRule testData =
     fun () ->
