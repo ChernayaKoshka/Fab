@@ -4,7 +4,7 @@ open FSharp.Data
 open Expecto
 open Fab
 
-type ZIPCodeList = CsvProvider< @"..\Samples\free-zipcode-database-Primary.csv", Schema="Zipcode=string" >
+type ZIPCodeList = CsvProvider< @"Samples\free-zipcode-database-Primary.csv", Schema="Zipcode=string" >
 
 let zipcodeRows =
     ZIPCodeList.GetSample().Rows
@@ -37,7 +37,7 @@ let zipparts =
     Maintainer Email gisteam@cityofchesapeake.net
     License https://hub.arcgis.com/api/v2/datasets/b469c77f314242a0a602075e936d2ea7_18/license
 *)
-type AddressList = CsvProvider< @"..\Samples\Addresses.csv", InferRows = 0, IgnoreErrors = true >
+type AddressList = CsvProvider< @"Samples\Addresses.csv", InferRows = 0, IgnoreErrors = true >
 
 let addressRows = AddressList.GetSample().Rows
 
@@ -56,7 +56,7 @@ let simpleStringParsing =
                 Helpers.run pRuleRecord "test = \"AbCdEfGhIjklmnopqrstuvwxYZ\""
                 |> Helpers.generateSingle
             Helpers.expectWellFormedRegex parser
-        
+
             [
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                 "ABCDEFGHIJKLMNOPQRStuvwxyz"
@@ -70,10 +70,10 @@ let simpleStringParsing =
                 Helpers.run pRuleRecord "test = \"\\\""
                 |> Helpers.generateSingle
             Helpers.expectWellFormedRegex parser
-            Helpers.expectSuccessfulMatch parser "\\" 
+            Helpers.expectSuccessfulMatch parser "\\"
         )
     ]
-    
+
 [<Tests>]
 let simpleRuleParsing =
     testList "ruleset processing" [
@@ -87,7 +87,7 @@ let simpleRuleParsing =
         )
         testList "ruleset execution tests" [
             testCase "Simple ruleset parsing test street" <|
-                Helpers.testRuleset 
+                Helpers.testRuleset
                     """
                     street           = [apt SP] house-num SP street-name CRLF
                     apt              = 1*4DIGIT
@@ -97,7 +97,7 @@ let simpleRuleParsing =
                     "street"
                     ("123 Main St\r\n" :: streets)
             testCase "Simple ruleset parsing test zip-part" <|
-                Helpers.testRuleset 
+                Helpers.testRuleset
                     """
                     zip-part         = town-name "," SP state 1*2SP zip-code CRLF
                     town-name        = 1*(ALPHA / SP)
@@ -119,7 +119,7 @@ let backtracking =
         [ "ABC" ]
         |> List.iter (Helpers.expectSuccessfulMatch parser)
     )
-    
+
 [<Tests>]
 let complexRuleProcessing =
     testList "Complex ruleset parsing test" [

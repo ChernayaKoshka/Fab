@@ -4,8 +4,8 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Parser\Parser.fsproj">
-      <Name>Parser.fsproj</Name>
+    <ProjectReference Include="..\Fab\Fab.fsproj">
+      <Name>Fab.fsproj</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
