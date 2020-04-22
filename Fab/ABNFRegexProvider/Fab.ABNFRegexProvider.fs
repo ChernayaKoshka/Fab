@@ -6,6 +6,7 @@ open System.IO
 open System.Reflection
 open FSharp.Quotations
 open FSharp.Core.CompilerServices
+open System.Text.RegularExpressions
 open ProviderImplementation
 open ProviderImplementation.ProvidedTypes
 
@@ -17,7 +18,7 @@ type DataSource(filename:string) =
     member this.FileName = filename
 
 [<TypeProvider>]
-type BasicErasingProvider (config : TypeProviderConfig) as this =
+type ABNFRegexProvider (config : TypeProviderConfig) as this =
     inherit TypeProviderForNamespaces (config, addDefaultProbingLocation=true)
 
     let ns = "Fab.ABNFRegexProvider"
@@ -44,7 +45,7 @@ type BasicErasingProvider (config : TypeProviderConfig) as this =
                     |> generate
                     |> Map.toArray
                     |> Array.iter (fun (name, regex) ->
-                        ProvidedProperty(name, typeof<System.Text.RegularExpressions.Regex>, (fun _ -> <@@System.Text.RegularExpressions.Regex(regex)@@>), isStatic = true)
+                        ProvidedProperty(name, typeof<Regex>, (fun _ -> <@@Regex(regex)@@>), isStatic = true)
                         |> provided.AddMember
                     )
                     provided
