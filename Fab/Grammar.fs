@@ -301,4 +301,6 @@ let pDocument : Parser<_> =
     <?> "pDocument"
 
 let parseAllRules (text : string) =
-    runParserOnString pDocument [ ] "" text
+    match runParserOnString pDocument [ ] "" text with
+    | Success(result, _, _) -> Result.Ok result
+    | Failure(err, _, _) -> Result.Error err

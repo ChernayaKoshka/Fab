@@ -68,7 +68,7 @@ let testRuleset (abnfString : string) testRule testData =
             let ruleMap =
                 (abnfString.Trim())
                 |> parseAllRules
-                |> unwrap
+                |> function Result.Ok res -> res | Result.Error err -> failwith err
                 |> generate
             ruleMap.[testRule]
         expectWellFormedRegex parser
