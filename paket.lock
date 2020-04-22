@@ -1,14 +1,21 @@
+STORAGE: PACKAGES
+RESTRICTION: || (== net45) (== netcoreapp3.1) (== netstandard2.0)
 NUGET
   remote: https://api.nuget.org/v3/index.json
     Expecto (9.0)
-      FSharp.Core (>= 4.6) - restriction: || (>= net461) (>= netstandard2.0)
-      Mono.Cecil (>= 0.11.2) - restriction: || (>= net461) (>= netstandard2.0)
+      FSharp.Core (>= 4.6) - restriction: || (&& (== net45) (>= net461)) (&& (== net45) (>= netstandard2.0)) (== netcoreapp3.1) (== netstandard2.0)
+      Mono.Cecil (>= 0.11.2) - restriction: || (&& (== net45) (>= net461)) (&& (== net45) (>= netstandard2.0)) (== netcoreapp3.1) (== netstandard2.0)
     FParsec (1.1.1)
-      FSharp.Core (>= 4.3.4) - restriction: || (>= net45) (>= netstandard2.0)
-      System.ValueTuple (>= 4.4) - restriction: >= net45
+      FSharp.Core (>= 4.3.4)
+      System.ValueTuple (>= 4.4) - restriction: || (== net45) (&& (== netcoreapp3.1) (>= net45)) (&& (== netstandard2.0) (>= net45))
     FSharp.Core (4.7.1)
     FSharp.Data (3.3.3)
-      FSharp.Core (>= 4.0.0.1) - restriction: >= net45
-      FSharp.Core (>= 4.3.4) - restriction: && (< net45) (>= netstandard2.0)
-    Mono.Cecil (0.11.2) - restriction: || (>= net461) (>= netstandard2.0)
-    System.ValueTuple (4.5) - restriction: >= net45
+      FSharp.Core (>= 4.0.0.1) - restriction: || (== net45) (&& (== netcoreapp3.1) (>= net45)) (&& (== netstandard2.0) (>= net45))
+      FSharp.Core (>= 4.3.4) - restriction: || (== netcoreapp3.1) (== netstandard2.0)
+    Mono.Cecil (0.11.2) - restriction: || (&& (== net45) (>= net461)) (&& (== net45) (>= netstandard2.0)) (== netcoreapp3.1) (== netstandard2.0)
+    NETStandard.Library.NETFramework (2.0.0-preview2-25405-01)
+    System.ValueTuple (4.5) - restriction: || (== net45) (&& (== netcoreapp3.1) (>= net45)) (&& (== netstandard2.0) (>= net45))
+GITHUB
+  remote: fsprojects/FSharp.TypeProviders.SDK
+    src/ProvidedTypes.fs (41b91efaaaebe2782472b283c0c716cbcb0bbe75)
+    src/ProvidedTypes.fsi (41b91efaaaebe2782472b283c0c716cbcb0bbe75)
