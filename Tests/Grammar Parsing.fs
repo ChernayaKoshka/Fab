@@ -2,6 +2,15 @@ module Tests
 
 open Expecto
 open Fab
+open Fab.Types
+
+let terminalSingle = TerminalSingle >> Terminals
+let terminalGroup = TerminalGroup >> Terminals
+
+
+let terminalRange = TerminalRange >> Terminals
+let terminalHexRange startHex endHex =
+    terminalRange ((char startHex), (char endHex))
 
 [<Tests>]
 let simple =
@@ -15,20 +24,20 @@ let simple =
           testCase "terminals parsing tests"
           <| Helpers.parseAndCompare pTerminals
                  [ (@"%b00010100.00011110.11111111",
-                    Terminals [ '\020'; '\030'; 'ÿ' ])
+                    terminalGroup [ '\020'; '\030'; 'ÿ' ])
                    (@"%d20.30.255",
-                    Terminals [ '\020'; '\030'; 'ÿ' ])
+                    terminalGroup [ '\020'; '\030'; 'ÿ' ])
                    (@"%x14.1E.FF",
-                    Terminals [ '\020'; '\030'; 'ÿ' ]) ]
+                    terminalGroup [ '\020'; '\030'; 'ÿ' ]) ]
 
           testCase "terminal range parsing tests"
           <| Helpers.parseAndCompare pTerminals
                  [ (@"%b0000000-11111111",
-                    Terminals [ '\000' .. '\255' ])
+                    terminalRange ('\000', '\255') )
                    (@"%d0-255",
-                    Terminals [ '\000' .. '\255' ])
+                    terminalRange ('\000', '\255') )
                    (@"%x0-FF",
-                    Terminals [ '\000' .. '\255' ]) ]
+                    terminalRange ('\000', '\255') ) ]
 
           testCase "string parsing tests"
           <| Helpers.parseAndCompare pString
@@ -78,20 +87,20 @@ let groups =
     testList "group parsing tests"
         [ testCase "sequence parsing tests"
           <| Helpers.parseAndCompare pAlternates
-                 [ (@"%d1", Terminals [ '\001' ])
+                 [ (@"%d1", terminalSingle '\001')
 
                    (@"%d1 %d2",
                     Sequence
-                        [ Terminals [ '\001' ]
-                          Terminals [ '\002' ] ])
+                        [ terminalSingle '\001'
+                          terminalSingle '\002' ])
 
                    (@"%d1 %d2 / %d3",
                     Alternatives
                         [ Sequence
-                            [ Terminals [ '\001' ]
+                            [ terminalSingle '\001'
 
-                              Terminals [ '\002' ] ]
-                          Terminals [ '\003' ] ])
+                              terminalSingle '\002' ]
+                          terminalSingle '\003' ])
                    (@"""1"" ""2"" ""3""",
                     Sequence
                         [ REString "1"
@@ -100,17 +109,17 @@ let groups =
 
           testCase "sequence group parsing tests"
           <| Helpers.parseAndCompare pSequenceGroup
-                 [ (@"(%d1)", Terminals [ '\001' ])
+                 [ (@"(%d1)", terminalSingle '\001')
                    (@"(%d1 %d2)",
                     Sequence
-                        [ Terminals [ '\001' ]
-                          Terminals [ '\002' ] ])
+                        [ terminalSingle '\001'
+                          terminalSingle '\002' ])
                    (@"(%d1 %d2 / %d3)",
                     Alternatives
                         [ Sequence
-                            [ Terminals [ '\001' ]
-                              Terminals [ '\002' ] ]
-                          Terminals [ '\003' ] ])
+                            [ terminalSingle '\001'
+                              terminalSingle '\002' ]
+                          terminalSingle '\003' ])
                    (@"(""1"" ""2"" ""3"")",
                     Sequence
                         [ REString "1"
@@ -119,16 +128,16 @@ let groups =
 
           testCase "alternate parsing tests"
           <| Helpers.parseAndCompare pAlternates
-                 [ (@"%d1", Terminals [ '\001' ])
+                 [ (@"%d1", terminalSingle '\001')
                    (@"%d1 / %d2",
                     Alternatives
-                        [ Terminals [ '\001' ]
-                          Terminals [ '\002' ] ])
+                        [ terminalSingle '\001'
+                          terminalSingle '\002' ])
                    (@"%d1 / %d2 / %d3",
                     Alternatives
-                        [ Terminals [ '\001' ]
-                          Terminals [ '\002' ]
-                          Terminals [ '\003' ] ])
+                        [ terminalSingle '\001'
+                          terminalSingle '\002'
+                          terminalSingle '\003' ])
                    (@"""1"" / ""2"" / ""3""",
                     Alternatives
                         [ REString "1"
@@ -138,18 +147,18 @@ let groups =
           testCase "optional group parsing tests"
           <| Helpers.parseAndCompare pOptionalGroup
                  [ (@"[%d1]",
-                    OptionalSequence(Terminals [ '\001' ]))
+                    OptionalSequence(terminalSingle '\001'))
                    (@"[%d1 %d2]",
                     OptionalSequence
                         (Sequence
-                            [ Terminals [ '\001' ]
-                              Terminals [ '\002' ] ]))
+                            [ terminalSingle '\001'
+                              terminalSingle '\002' ]))
                    (@"[%d1 %d2 %d3]",
                     OptionalSequence
                         (Sequence
-                            [ Terminals [ '\001' ]
-                              Terminals [ '\002' ]
-                              Terminals [ '\003' ] ]))
+                            [ terminalSingle '\001'
+                              terminalSingle '\002'
+                              terminalSingle '\003' ]))
                    (@"[""1"" ""2"" ""3""]",
                     OptionalSequence
                         (Sequence
@@ -199,45 +208,45 @@ let combinations =
                           REString "3" ])
                    (@"%x20 / (""1"" / ""2"") / %x20",
                     Alternatives
-                        [ Terminals [ ' ' ]
+                        [ terminalSingle ' '
                           Alternatives
                               [ REString "1"
                                 REString "2" ]
-                          Terminals [ ' ' ] ])
+                          terminalSingle ' ' ])
                    (@"[%d20 / (""1"" / ""2"")] / %b0101",
                     Alternatives
                         [ OptionalSequence
                             (Alternatives
-                                [ Terminals [ '\020' ]
+                                [ terminalSingle '\020'
                                   Alternatives
                                       [ REString "1"
                                         REString "2" ] ])
-                          Terminals [ '\005' ] ])
+                          terminalSingle '\005' ])
                    (@"%b0101 / [""1"" / ""2""] / %x20",
                     Alternatives
-                        [ Terminals [ '\005' ]
+                        [ terminalSingle '\005'
 
                           OptionalSequence
                               (Alternatives
                                   [ REString "1"
                                     REString "2" ])
-                          Terminals [ ' ' ] ])
+                          terminalSingle ' ' ])
                    (@"[%b0101 / [""1"" / ""2""] / %x20]",
                     OptionalSequence
                         (Alternatives
-                            [ Terminals [ '\005' ]
+                            [ terminalSingle '\005'
 
                               OptionalSequence
                                   (Alternatives
                                       [ REString "1"
                                         REString "2" ])
-                              Terminals [ ' ' ] ]))
+                              terminalSingle ' ' ]))
                    (@"[%b0101 / (%x0F) / %x20]",
                     OptionalSequence
                         (Alternatives
-                            [ Terminals [ '\005' ]
-                              Terminals [ '\015' ]
-                              Terminals [ ' ' ] ])) ]
+                            [ terminalSingle '\005'
+                              terminalSingle '\015'
+                              terminalSingle ' ' ])) ]
 
           testCase "group repetition parsing test"
           <| Helpers.parseAndCompare pAlternates
@@ -694,67 +703,11 @@ let rules =
                    (@"nospcrlfcl =  %x01-09 / %x0B-0C / %x0E-1F / %x21-39 / %x3B-FF",
                     ("nospcrlfcl",
                      [ Alternatives
-                         [ Terminals
-                             [ '\001'
-                               '\002'
-                               '\003'
-                               '\004'
-                               '\005'
-                               '\006'
-                               '\007'
-                               '\b'
-                               '\009' ]
-                           Terminals [ '\011'; '\012' ]
-
-                           Terminals
-                               [ '\014'
-                                 '\015'
-                                 '\016'
-                                 '\017'
-                                 '\018'
-                                 '\019'
-                                 '\020'
-                                 '\021'
-                                 '\022'
-                                 '\023'
-                                 '\024'
-                                 '\025'
-                                 '\026'
-                                 '\027'
-                                 '\028'
-                                 '\029'
-                                 '\030'
-                                 '\031' ]
-
-                           Terminals
-                               [ '!'
-                                 '"'
-                                 '#'
-                                 '$'
-                                 '%'
-                                 '&'
-                                 '\''
-                                 '('
-                                 ')'
-                                 '*'
-                                 '+'
-                                 ','
-                                 '-'
-                                 '.'
-                                 '/'
-                                 '0'
-                                 '1'
-                                 '2'
-                                 '3'
-                                 '4'
-                                 '5'
-                                 '6'
-                                 '7'
-                                 '8'
-                                 '9' ]
-                           Terminals
-                               [ for c in [ 0x3B .. 0xFF ] do
-                                   yield char c ] ] ]))
+                         [ terminalHexRange 0x01 0x09
+                           terminalHexRange 0x0B 0x0C
+                           terminalHexRange 0x0E 0x1F
+                           terminalHexRange 0x21 0x39
+                           terminalHexRange 0x3B 0xFF ] ]))
 
                    (@"middle     =  nospcrlfcl *( "":"" / nospcrlfcl )",
                     ("middle",
@@ -778,12 +731,12 @@ let rules =
                                 RuleReference "nospcrlfcl" ]) ]))
 
                    (@"SPACE      =  %x20        ; space character",
-                    ("SPACE", [ Terminals [ ' ' ] ]))
+                    ("SPACE", [ terminalSingle ' ' ]))
                    (@"crlf       =  %x0D %x0A   ; ""carriage return"" ""linefeed""",
                     ("crlf",
                      [ Sequence
-                         [ Terminals [ '\013' ]
-                           Terminals [ '\010' ] ] ]))
+                         [ terminalSingle '\013'
+                           terminalSingle '\010' ] ]))
                    (@"target     =  nickname / server",
                     ("target",
                      [ Alternatives
@@ -966,102 +919,23 @@ let rules =
                    (@"chanstring =  %x01-07 / %x08-09 / %x0B-0C / %x0E-1F / %x21-2B",
                     ("chanstring",
                      [ Alternatives
-                         [ Terminals
-                             [ '\001'
-                               '\002'
-                               '\003'
-                               '\004'
-                               '\005'
-                               '\006'
-                               '\007' ]
-                           Terminals [ '\b'; '\009' ]
-                           Terminals [ '\011'; '\012' ]
-
-                           Terminals
-                               [ '\014'
-                                 '\015'
-                                 '\016'
-                                 '\017'
-                                 '\018'
-                                 '\019'
-                                 '\020'
-                                 '\021'
-                                 '\022'
-                                 '\023'
-                                 '\024'
-                                 '\025'
-                                 '\026'
-                                 '\027'
-                                 '\028'
-                                 '\029'
-                                 '\030'
-                                 '\031' ]
-
-                           Terminals
-                               [ '!'
-                                 '"'
-                                 '#'
-                                 '$'
-                                 '%'
-                                 '&'
-                                 '\''
-                                 '('
-                                 ')'
-                                 '*'
-                                 '+' ] ] ]))
+                         [ terminalHexRange 0x01 0x07
+                           terminalHexRange 0x08 0x09
+                           terminalHexRange 0x0B 0x0C
+                           terminalHexRange 0x0E 0x1F
+                           terminalHexRange 0x21 0x2B ] ]))
                    (@"chanstring = %x2D-39 / %x3B-FF",
                     ("chanstring",
                      [ Alternatives
-                         [ Terminals
-                             [ '-'
-                               '.'
-                               '/'
-                               '0'
-                               '1'
-                               '2'
-                               '3'
-                               '4'
-                               '5'
-                               '6'
-                               '7'
-                               '8'
-                               '9' ]
-                           Terminals
-                               [ for c in [ 0x3B .. 0xFF ] do
-                                   yield char c ] ] ]))
+                         [ terminalHexRange 0x2D 0x39
+                           terminalHexRange 0x3B 0xFF ] ]))
 
                    (@"channelid  = 5( %x41-5A / digit )   ",
                     ("channelid",
                      [ Repetition
                          (Exactly 5uy,
                           Alternatives
-                              [ Terminals
-                                  [ 'A'
-                                    'B'
-                                    'C'
-                                    'D'
-                                    'E'
-                                    'F'
-                                    'G'
-                                    'H'
-                                    'I'
-                                    'J'
-                                    'K'
-                                    'L'
-                                    'M'
-                                    'N'
-                                    'O'
-                                    'P'
-                                    'Q'
-                                    'R'
-                                    'S'
-                                    'T'
-                                    'U'
-                                    'V'
-                                    'W'
-                                    'X'
-                                    'Y'
-                                    'Z' ]
+                              [ terminalHexRange 0x41 0x5A
                                 RuleReference "digit" ]) ]))
 
                    (@"user       =  1*( %x01-09 / %x0B-0C / %x0E-1F / %x21-3F / %x41-FF )",
@@ -1069,268 +943,33 @@ let rules =
                      [ Repetition
                          (AtLeast 1uy,
                           Alternatives
-                              [ Terminals
-                                  [ '\001'
-                                    '\002'
-                                    '\003'
-                                    '\004'
-                                    '\005'
-                                    '\006'
-                                    '\007'
-                                    '\b'
-                                    '\009' ]
-                                Terminals [ '\011'; '\012' ]
-
-                                Terminals
-                                    [ '\014'
-                                      '\015'
-                                      '\016'
-                                      '\017'
-                                      '\018'
-                                      '\019'
-                                      '\020'
-                                      '\021'
-                                      '\022'
-                                      '\023'
-                                      '\024'
-                                      '\025'
-                                      '\026'
-                                      '\027'
-                                      '\028'
-                                      '\029'
-                                      '\030'
-                                      '\031' ]
-
-                                Terminals
-                                    [ '!'
-                                      '"'
-                                      '#'
-                                      '$'
-                                      '%'
-                                      '&'
-                                      '\''
-                                      '('
-                                      ')'
-                                      '*'
-                                      '+'
-                                      ','
-                                      '-'
-                                      '.'
-                                      '/'
-                                      '0'
-                                      '1'
-                                      '2'
-                                      '3'
-                                      '4'
-                                      '5'
-                                      '6'
-                                      '7'
-                                      '8'
-                                      '9'
-                                      ':'
-                                      ';'
-                                      '<'
-                                      '='
-                                      '>'
-                                      '?' ]
-                                Terminals
-                                    [ for c in [ 0x41 .. 0xFF ] do
-                                        yield char c ] ]) ]))
+                              [ terminalHexRange 0x01 0x09
+                                terminalHexRange 0x0B 0x0C
+                                terminalHexRange 0x0E 0x1F
+                                terminalHexRange 0x21 0x3F
+                                terminalHexRange 0x41 0xFF ]) ]))
 
                    (@"key        =  1*23( %x01-05 / %x07-08 / %x0C / %x0E-1F / %x21-7F )",
                     ("key",
                      [ Repetition
                          (Between(1uy, 23uy),
                           Alternatives
-                              [ Terminals
-                                  [ '\001'
-                                    '\002'
-                                    '\003'
-                                    '\004'
-                                    '\005' ]
-                                Terminals [ '\007'; '\b' ]
-                                Terminals [ '\012' ]
-
-                                Terminals
-                                    [ '\014'
-                                      '\015'
-                                      '\016'
-                                      '\017'
-                                      '\018'
-                                      '\019'
-                                      '\020'
-                                      '\021'
-                                      '\022'
-                                      '\023'
-                                      '\024'
-                                      '\025'
-                                      '\026'
-                                      '\027'
-                                      '\028'
-                                      '\029'
-                                      '\030'
-                                      '\031' ]
-
-                                Terminals
-                                    [ '!'
-                                      '"'
-                                      '#'
-                                      '$'
-                                      '%'
-                                      '&'
-                                      '\''
-                                      '('
-                                      ')'
-                                      '*'
-                                      '+'
-                                      ','
-                                      '-'
-                                      '.'
-                                      '/'
-                                      '0'
-                                      '1'
-                                      '2'
-                                      '3'
-                                      '4'
-                                      '5'
-                                      '6'
-                                      '7'
-                                      '8'
-                                      '9'
-                                      ':'
-                                      ';'
-                                      '<'
-                                      '='
-                                      '>'
-                                      '?'
-                                      '@'
-                                      'A'
-                                      'B'
-                                      'C'
-                                      'D'
-                                      'E'
-                                      'F'
-                                      'G'
-                                      'H'
-                                      'I'
-                                      'J'
-                                      'K'
-                                      'L'
-                                      'M'
-                                      'N'
-                                      'O'
-                                      'P'
-                                      'Q'
-                                      'R'
-                                      'S'
-                                      'T'
-                                      'U'
-                                      'V'
-                                      'W'
-                                      'X'
-                                      'Y'
-                                      'Z'
-                                      '['
-                                      '\\'
-                                      ']'
-                                      '^'
-                                      '_'
-                                      '`'
-                                      'a'
-                                      'b'
-                                      'c'
-                                      'd'
-                                      'e'
-                                      'f'
-                                      'g'
-                                      'h'
-                                      'i'
-                                      'j'
-                                      'k'
-                                      'l'
-                                      'm'
-                                      'n'
-                                      'o'
-                                      'p'
-                                      'q'
-                                      'r'
-                                      's'
-                                      't'
-                                      'u'
-                                      'v'
-                                      'w'
-                                      'x'
-                                      'y'
-                                      'z'
-                                      '{'
-                                      '|'
-                                      '}'
-                                      '~'
-                                      '\127' ] ]) ]))
+                              [
+                                terminalHexRange 0x01 0x05
+                                terminalHexRange 0x07 0x08
+                                terminalSingle (char 0x0C)
+                                terminalHexRange 0x0E 0x1F
+                                terminalHexRange 0x21 0x7F ]) ]))
 
                    (@"letter     =  %x41-5A / %x61-7A",
                     ("letter",
                      [ Alternatives
-                         [ Terminals
-                             [ 'A'
-                               'B'
-                               'C'
-                               'D'
-                               'E'
-                               'F'
-                               'G'
-                               'H'
-                               'I'
-                               'J'
-                               'K'
-                               'L'
-                               'M'
-                               'N'
-                               'O'
-                               'P'
-                               'Q'
-                               'R'
-                               'S'
-                               'T'
-                               'U'
-                               'V'
-                               'W'
-                               'X'
-                               'Y'
-                               'Z' ]
-
-                           Terminals
-                               [ 'a'
-                                 'b'
-                                 'c'
-                                 'd'
-                                 'e'
-                                 'f'
-                                 'g'
-                                 'h'
-                                 'i'
-                                 'j'
-                                 'k'
-                                 'l'
-                                 'm'
-                                 'n'
-                                 'o'
-                                 'p'
-                                 'q'
-                                 'r'
-                                 's'
-                                 't'
-                                 'u'
-                                 'v'
-                                 'w'
-                                 'x'
-                                 'y'
-                                 'z' ] ] ]))
+                         [ terminalHexRange 0x41 0x5A
+                           terminalHexRange 0x61 0x7A ] ]))
 
                    (@"digit      =  %x30-39          ",
                     ("digit",
-                     [ Terminals
-                         [ '0'; '1'; '2'; '3'; '4'; '5'; '6'; '7'; '8'; '9' ] ]))
+                     [ terminalHexRange 0x30 0x39 ]))
                    (@"hexdigit   =  digit / ""A"" / ""B"" / ""C"" / ""D"" / ""E"" / ""F""",
                     ("hexdigit",
                      [ Alternatives
@@ -1344,9 +983,8 @@ let rules =
                    (@"special    =  %x5B-60 / %x7B-7D",
                     ("special",
                      [ Alternatives
-                         [ Terminals
-                             [ '['; '\\'; ']'; '^'; '_'; '`' ]
-                           Terminals [ '{'; '|'; '}' ] ] ]))
+                         [ terminalHexRange 0x5B 0x60
+                           terminalHexRange 0x7B 0x7D ] ]))
                    (@"mask       =  *( nowild / noesc wildone / noesc wildmany )",
                     ("mask",
                      [ Repetition
@@ -1362,184 +1000,125 @@ let rules =
                                       RuleReference
                                           "wildmany" ] ]) ]))
                    (@"wildone    =  %x3F",
-                    ("wildone", [ Terminals [ '?' ] ]))
+                    ("wildone", [ terminalSingle (char 0x3F) ]))
                    (@"wildmany   =  %x2A",
-                    ("wildmany", [ Terminals [ '*' ] ]))
+                    ("wildmany", [ terminalSingle (char 0x2A) ]))
                    (@"nowild     =  %x01-29 / %x2B-3E / %x40-FF  ; any octet except NUL, ""*"", ""?""",
                     ("nowild",
                      [ Alternatives
-                         [ Terminals
-                             [ '\001'
-                               '\002'
-                               '\003'
-                               '\004'
-                               '\005'
-                               '\006'
-                               '\007'
-                               '\b'
-                               '\009'
-                               '\010'
-                               '\011'
-                               '\012'
-                               '\013'
-                               '\014'
-                               '\015'
-                               '\016'
-                               '\017'
-                               '\018'
-                               '\019'
-                               '\020'
-                               '\021'
-                               '\022'
-                               '\023'
-                               '\024'
-                               '\025'
-                               '\026'
-                               '\027'
-                               '\028'
-                               '\029'
-                               '\030'
-                               '\031'
-                               ' '
-                               '!'
-                               '"'
-                               '#'
-                               '$'
-                               '%'
-                               '&'
-                               '\''
-                               '('
-                               ')' ]
-
-                           Terminals
-                               [ '+'
-                                 ','
-                                 '-'
-                                 '.'
-                                 '/'
-                                 '0'
-                                 '1'
-                                 '2'
-                                 '3'
-                                 '4'
-                                 '5'
-                                 '6'
-                                 '7'
-                                 '8'
-                                 '9'
-                                 ':'
-                                 ';'
-                                 '<'
-                                 '='
-                                 '>' ]
-                           Terminals
-                               [ for c in [ 0x40 .. 0xFF ] do
-                                   yield char c ] ] ]))
+                         [ terminalHexRange 0x01 0x29
+                           terminalHexRange 0x2B 0x3E
+                           terminalHexRange 0x40 0xFF ] ]))
                    (@"noesc      =  %x01-5B / %x5D-FF  ; any octet except NUL and ""\""",
                     ("noesc",
                      [ Alternatives
-                         [ Terminals
-                             [ '\001'
-                               '\002'
-                               '\003'
-                               '\004'
-                               '\005'
-                               '\006'
-                               '\007'
-                               '\b'
-                               '\009'
-                               '\010'
-                               '\011'
-                               '\012'
-                               '\013'
-                               '\014'
-                               '\015'
-                               '\016'
-                               '\017'
-                               '\018'
-                               '\019'
-                               '\020'
-                               '\021'
-                               '\022'
-                               '\023'
-                               '\024'
-                               '\025'
-                               '\026'
-                               '\027'
-                               '\028'
-                               '\029'
-                               '\030'
-                               '\031'
-                               ' '
-                               '!'
-                               '"'
-                               '#'
-                               '$'
-                               '%'
-                               '&'
-                               '\''
-                               '('
-                               ')'
-                               '*'
-                               '+'
-                               ','
-                               '-'
-                               '.'
-                               '/'
-                               '0'
-                               '1'
-                               '2'
-                               '3'
-                               '4'
-                               '5'
-                               '6'
-                               '7'
-                               '8'
-                               '9'
-                               ':'
-                               ';'
-                               '<'
-                               '='
-                               '>'
-                               '?'
-                               '@'
-                               'A'
-                               'B'
-                               'C'
-                               'D'
-                               'E'
-                               'F'
-                               'G'
-                               'H'
-                               'I'
-                               'J'
-                               'K'
-                               'L'
-                               'M'
-                               'N'
-                               'O'
-                               'P'
-                               'Q'
-                               'R'
-                               'S'
-                               'T'
-                               'U'
-                               'V'
-                               'W'
-                               'X'
-                               'Y'
-                               'Z'
-                               '[' ]
-                           Terminals
-                               [ for c in [ 0x5D .. 0xFF ] do
-                                   yield char c ] ] ]))
+                         [ terminalHexRange 0x01 0x5B
+                           terminalHexRange 0x5D 0xFF ] ]))
                    (@"matchone   =  %x01-FF    ; matches wildone",
                     ("matchone",
-                     [ Terminals
-                         [ for c in [ 0x01 .. 0xFF ] do
-                             yield char c ] ]))
+                     [ terminalHexRange 0x01 0xFF ]))
 
                    (@"matchmany  =  *matchone    ; matches wildmany",
                     ("matchmany",
                      [ Repetition
                          (Any, RuleReference "matchone") ])) ] ]
+
+[<Tests>]
+let documentParsing =
+    testList "document parsing tests" [
+        testCase "IRC document" (fun _ ->
+            let document =
+                """
+; Pulled from https://tools.ietf.org/html/rfc2812#section-3
+; With some Errata applied:
+; * https://www.rfc-editor.org/errata/eid4289
+; * https://www.rfc-editor.org/errata/eid3783
+; * https://www.rfc-editor.org/errata/eid4836
+
+;   The extracted message is parsed into the components <prefix>,
+;   <command> and list of parameters (<params>).
+;
+;    The Augmented BNF representation for this is:
+
+message    =  [ ":" prefix SPACE ] command [ params ] crlf
+prefix     =  servername / ( nickname [ [ "!" user ] "@" host ] )
+command    =  1*letter / 3digit
+params     =  *14( SPACE middle ) [ SPACE ":" trailing ]
+params     =/ 14( SPACE middle ) [ SPACE [ ":" ] trailing ]
+
+nospcrlfcl =  %x01-09 / %x0B-0C / %x0E-1F / %x21-39 / %x3B-FF
+                ; any octet except NUL, CR, LF, " " and ":"
+middle     =  nospcrlfcl *( ":" / nospcrlfcl )
+trailing   =  *( ":" / " " / nospcrlfcl )
+
+SPACE      =  %x20        ; space character
+crlf       =  %x0D %x0A   ; "carriage return" "linefeed"
+
+
+; Most protocol messages specify additional semantics and syntax for
+;   the extracted parameter strings dictated by their position in the
+;   list.  For example, many server commands will assume that the first
+;   parameter after the command is the list of targets, which can be
+;   described with:
+target     =  nickname / servername
+msgtarget  =  msgto *( "," msgto )
+msgto      =  channel / ( user [ "%" host ] "@" servername )
+msgto      =/ ( user "%" host ) / targetmask
+msgto      =/ nickname / ( nickname "!" user "@" host )
+channel    =  ( "#" / "+" / ( "!" channelid ) / "&" ) chanstring [ ":" chanstring ]
+servername =  hostname
+host       =  hostname / hostaddr
+hostname   =  shortname *( "." shortname )
+shortname  =  ( letter / digit ) *( letter / digit / "-" ) *( letter / digit )
+                ; as specified in RFC 1123 [HNAME]
+hostaddr   =  ip4addr / ip6addr
+ip4addr    =  1*3digit "." 1*3digit "." 1*3digit "." 1*3digit
+ip6addr    =  1*hexdigit 7( ":" 1*hexdigit )
+ip6addr    =/ "0:0:0:0:0:" ( "0" / "FFFF" ) ":" ip4addr
+nickname   =  ( letter / special ) *8( letter / digit / special / "-" )
+targetmask =  ( "$" / "#" ) mask
+                ; see details on allowed masks in section 3.3.1
+chanstring = *49(%x01-06 / %x08-09 / %x0B-0C / %x0E-1F / %x21-2B / %x2D-39 / %x3B-FF)
+                ; any octet except NUL, BELL, CR, LF, " ", "," and ":"
+channelid  = 5( %x41-5A / digit )   ; 5( A-Z / 0-9 )
+
+; Other parameter syntaxes are:
+user       =  1*( %x01-09 / %x0B-0C / %x0E-1F / %x21-3F / %x41-FF )
+                ; any octet except NUL, CR, LF, " " and "@"
+key        =  1*23( %x01-08 / %x0E-1F / %x21-7F )
+                ; any 7-bit US_ASCII character,
+                ; except NUL, CR, LF, FF, h/v TABs, and " "
+letter     =  %x41-5A / %x61-7A       ; A-Z / a-z
+digit      =  %x30-39                 ; 0-9
+hexdigit   =  digit / "A" / "B" / "C" / "D" / "E" / "F"
+special    =  %x5B-60 / %x7B-7D
+                ; "[", "]", "\", "`", "_", "^", "{", "|", "}"
+
+
+; 2.5 Wildcard expressions
+;
+;    When wildcards are allowed in a string, it is referred as a "mask".
+;
+;    For string matching purposes, the protocol allows the use of two
+;    special characters: '?' (%x3F) to match one and only one character,
+;    and '*' (%x2A) to match any number of any characters.  These two
+;    characters can be escaped using the character '\' (%x5C).
+;
+;    The Augmented BNF syntax for this is:
+mask       =  *( nowild / noesc wildone / noesc wildmany )
+wildone    =  %x3F
+wildmany   =  %x2A
+nowild     =  %x01-29 / %x2B-3E / %x40-FF
+                ; any octet except NUL, "*", "?"
+noesc      =  %x01-5B / %x5D-FF
+                ; any octet except NUL and "\"
+matchone   =  %x01-FF
+                ; matches wildone
+matchmany  =  *matchone
+                ; matches wildmany
+"""
+            Helpers.run pDocument document
+            |> Helpers.unwrap
+            |> ignore
+        )
+    ]
