@@ -33,11 +33,11 @@ let simple =
           testCase "terminal range parsing tests"
           <| Helpers.parseAndCompare pTerminals
                  [ (@"%b0000000-11111111",
-                    terminalRange ('\000', '\255') )
+                    terminalRange ('\000', '\255'))
                    (@"%d0-255",
-                    terminalRange ('\000', '\255') )
+                    terminalRange ('\000', '\255'))
                    (@"%x0-FF",
-                    terminalRange ('\000', '\255') ) ]
+                    terminalRange ('\000', '\255')) ]
 
           testCase "string parsing tests"
           <| Helpers.parseAndCompare pString
@@ -954,8 +954,7 @@ let rules =
                      [ Repetition
                          (Between(1uy, 23uy),
                           Alternatives
-                              [
-                                terminalHexRange 0x01 0x05
+                              [ terminalHexRange 0x01 0x05
                                 terminalHexRange 0x07 0x08
                                 terminalSingle (char 0x0C)
                                 terminalHexRange 0x0E 0x1F
@@ -1000,9 +999,11 @@ let rules =
                                       RuleReference
                                           "wildmany" ] ]) ]))
                    (@"wildone    =  %x3F",
-                    ("wildone", [ terminalSingle (char 0x3F) ]))
+                    ("wildone",
+                     [ terminalSingle (char 0x3F) ]))
                    (@"wildmany   =  %x2A",
-                    ("wildmany", [ terminalSingle (char 0x2A) ]))
+                    ("wildmany",
+                     [ terminalSingle (char 0x2A) ]))
                    (@"nowild     =  %x01-29 / %x2B-3E / %x40-FF  ; any octet except NUL, ""*"", ""?""",
                     ("nowild",
                      [ Alternatives
@@ -1025,10 +1026,9 @@ let rules =
 
 [<Tests>]
 let documentParsing =
-    testList "document parsing tests" [
-        testCase "IRC document" (fun _ ->
-            let document =
-                """
+    testList "document parsing tests"
+        [ testCase "IRC document" (fun _ ->
+              let document = """
 ; Pulled from https://tools.ietf.org/html/rfc2812#section-3
 ; With some Errata applied:
 ; * https://www.rfc-editor.org/errata/eid4289
@@ -1117,8 +1117,6 @@ matchone   =  %x01-FF
 matchmany  =  *matchone
                 ; matches wildmany
 """
-            Helpers.run pDocument document
-            |> Helpers.unwrap
-            |> ignore
-        )
-    ]
+              Helpers.run pDocument document
+              |> Helpers.unwrap
+              |> ignore) ]
