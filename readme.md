@@ -42,3 +42,13 @@ Into this:
 | zip-part | ` ^(?:(?:(?'town_name'(?:[A-za-z]|\ )+?),\ (?'state'[A-za-z]{2})\ {1,2}?(?'zip_code'(?:[0-9]{5}(?:(?:-[0-9]{4}))?))\r\n))$ ` |
 
 Even for regular expressions, they look terrible. But, the idea is that you'd be using them through code ;)
+
+Or, more specifically, through the ABNFRegexProvider that is included. For example,
+
+```fsharp
+#r "path/to/package/Fab.ABNFRegexProvider.dll"
+open Fab.ABNFRegexProvider
+type MyABNF = ABNFRegex< @"path/to/file/defining/ABNF/rules" >
+let myMatch = MyABNF.SomeRule.Match(@"a number: 123")
+printfn "%s" myMatch.["numberRule"].Value
+```
