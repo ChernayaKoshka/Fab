@@ -64,15 +64,15 @@ let pTerminals : Parser<_> =
                 let reply' =
                     if stream.Peek() = '.' then
                         (many ((pchar '.') >>. pTerminalValueAs terminalType)
-                        |>> (fun chars -> result :: chars)) stream
+                        |>> (fun chars -> TerminalGroup <| result :: chars)) stream
                     else if (stream.Peek() = '-') then
                         ((pchar '-') >>. pTerminalValueAs terminalType
-                        |>> (fun range -> [ for i in [result..range] do yield char i ])) stream
+                        |>> (fun range -> TerminalRange (result, range))) stream
                     else
-                        Reply([result])
+                        Reply(TerminalSingle result)
 
                 if reply'.Status = ReplyStatus.Ok then
-                    Reply(Terminals (reply'.Result))
+                    Reply(Terminals reply'.Result)
                 else
                     Reply(reply'.Status, reply'.Error)
             else
