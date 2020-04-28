@@ -33,7 +33,7 @@ let realRegexEscape str =
         .Replace("]", "\]")
         .Replace("}", "\}")
         .Replace("/", "\/")
-let realRegexEscapeChar : char -> char = string >> realRegexEscape >> char
+let realRegexEscapeChar : char -> string = string >> realRegexEscape
 
 
 let rec generate (rules : Rule list) =
@@ -53,7 +53,7 @@ let rec generate (rules : Rule list) =
             | TerminalSingle single ->
                 single |> string |> realRegexEscape
             | TerminalRange (startChar, endChar) ->
-                sprintf "[%c-%c]" (realRegexEscapeChar startChar) (realRegexEscapeChar endChar)
+                sprintf "[%s-%s]" (realRegexEscapeChar startChar) (realRegexEscapeChar endChar)
             | TerminalGroup terminals ->
                 terminals
                 |> List.map (string >> realRegexEscape)
