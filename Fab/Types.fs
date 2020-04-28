@@ -5,8 +5,6 @@ open FParsec
 
 type RuleName = string
 
-type Terminal = char
-
 type Range =
     | Any
     | AtLeast of uint8
@@ -32,9 +30,16 @@ type CoreRule =
     | CTL
     | BIT
 
+type Terminal = char
+
+type TerminalGrouping =
+    | TerminalSingle of Terminal
+    | TerminalRange of Terminal * Terminal
+    | TerminalGroup of Terminal list
+
 type RuleElement =
     | REString           of string
-    | Terminals        of Terminal list   // %x20, %x20.21, %x20-21
+    | Terminals        of TerminalGrouping        // %x20, %x20.21, %x20-21
     | CoreRule         of CoreRule
     | Alternatives     of RuleElement list    // %x20 / %x21
     | OptionalSequence of RuleElement         // [optional]
@@ -45,7 +50,7 @@ type RuleElement =
         override this.ToString() =
             match this with
             | REString str -> sprintf "String(%s)" str
-            | Terminals terms -> sprintf "Terminals [%d..%d]" (int terms.[terms.Length-1]) (int terms.[0])
+            // | Terminals terms -> sprintf "Terminals [%d..%d]" (int terms.[terms.Length-1]) (int terms.[0])
             | CoreRule rule -> rule.ToString()
             | Alternatives elems -> sprintf "Alternatives: %s" ((sprintf "%O" elems).Replace("\r", "").Replace("\n", "  "))
             | OptionalSequence elems -> sprintf "OptionalSequence: %s" ((sprintf "%O" elems).Replace("\r", "").Replace("\n", "  "))
