@@ -17,10 +17,6 @@ let (<!>) (p: Parser<_>) label : Parser<_> =
             printfn "|%s|" (stream.PeekString(int stream.Column + int stream.IndexOfLastCharPlus1))
             reply
 
-let pSpace = 
-    pchar ' '
-    <!> "pSpace"
-
 type TerminalType =
     | Bit
     | Digit
@@ -54,7 +50,7 @@ let pTerminal : Parser<_> =
                     Reply(reply'.Status, reply'.Error)
             else
                 Reply(reply.Status, reply.Error)
-    p 
+    p
     <!> "pTerminal"
     <?> "pTerminal"
 
@@ -81,17 +77,26 @@ let pTerminals : Parser<_> =
                     Reply(reply'.Status, reply'.Error)
             else
                 Reply(reply.Status, reply.Error)
-    p 
+    p
     <!> "pTerminals"
     <?> "pTerminals"
 
 let ruleChars = CoreRules.ALPHA @ CoreRules.DIGIT @ ['-'; '<'; '>']
-let pRuleChar = 
+let pRuleChar =
     anyOf ruleChars
     <!> "pRuleChar"
 
+let boundaryChars = [ ']'; ')'; '/'; ';'; '\r'; '\n' ]
+let pBoundaryChar : Parser<_> =
+    (skipAnyOf boundaryChars <|> eof)
+    <?> "boundary character"
 
 let skipWhitespace : Parser<_> =
+    skipMany1 (anyOf CoreRules.WSP)
+    <!> "pWhitespace"
+    <?> "skipWhitespace"
+
+let skipAnyWhitespace : Parser<_> =
     skipMany (anyOf CoreRules.WSP)
     <!> "pWhitespace"
     <?> "skipWhitespace"
@@ -106,12 +111,6 @@ let pRuleReference : Parser<_> =
     |>> RuleReference
     <!> "pRuleReference"
     <?> "pRuleReference"
-
-let pComment : Parser<_> =
-    pchar ';'
-    >>. restOfLine false
-    <!> "pComment"
-    <?> "pComment"
 
 let pString : Parser<_> =
     between (pchar '"') (pchar '"') (manyChars (noneOf [ '"' ]))
@@ -145,14 +144,10 @@ let pCoreRule : Parser<_> =
     <?> "pCoreRule"
 
 
-let pBetweenWhitespace openStr closeStr parser : Parser<_> =
-    between (skipString openStr) (skipString closeStr) (skipWhitespace >>. parser .>> skipWhitespace)
-    <?> "pBetweenWhitespace"
-
 let pAlternateSeparator : Parser<_> =
     skipWhitespace >>? skipChar '/' .>> skipWhitespace
     <?> "pAlternateSeparator"
-    
+
 let (pNotAlternates, pNotAlternatesRef) : (Parser<RuleElement> * Parser<RuleElement> ref) = createParserForwardedToRef()
 let (pNotSequence, pNotSequenceRef) : (Parser<RuleElement> * Parser<RuleElement> ref) = createParserForwardedToRef()
 
@@ -164,9 +159,12 @@ let pAlternates : Parser<_> =
         | alternatives -> Alternatives alternatives)
     <!> "pAlternates"
     <?> "pAlternates"
-    
+
+let nonBoundaryWhitespace =
+    skipWhitespace .>>? notFollowedBy pBoundaryChar
+
 let pSequence : Parser<_> =
-    sepEndBy1 pNotSequence pSpace
+    sepBy1 pNotSequence nonBoundaryWhitespace
     |>> (fun sequence ->
         match sequence with
         | [ single ] -> single
@@ -174,7 +172,11 @@ let pSequence : Parser<_> =
             Sequence multiple)
     <!> "pSequence"
     <?> "pSequence"
-    
+
+let pBetweenWhitespace openStr closeStr parser : Parser<_> =
+    between (skipString openStr) (skipString closeStr) (skipAnyWhitespace >>. parser .>> skipAnyWhitespace)
+    <?> "pBetweenWhitespace"
+
 let pOptionalGroup : Parser<_> =
     pBetweenWhitespace "[" "]" pAlternates
     |>> OptionalSequence
@@ -263,9 +265,7 @@ let ruleMustBeDefined ruleName : Parser<_> =
 
 
 let pRuleDefinition : Parser<_> =
-    sepBy1 pAlternates (pchar ' ' .>>.? notFollowedBy (anyOf [ ' '; ';' ]))
-    .>>  skipWhitespace
-    .>>  ((pComment |>> ignore) <|> (followedBy (skipNewline <|> eof)))
+    sepBy1 pAlternates nonBoundaryWhitespace
     <!> "pRule"
     <?> "pRule"
 
@@ -295,8 +295,22 @@ let pRuleRecord : Parser<_> =
     >>= addRule
     <?> "pRuleRecord"
 
+
+let pComment : Parser<_> =
+    pchar ';'
+    >>. restOfLine false
+    <!> "pComment"
+    <?> "pComment"
+
+let skipComment =
+    pComment |>> ignore
+
+let skipGarbage =
+    many (skipComment <|> skipAnyOf CoreRules.WSP <|> skipNewline)
+
 let pDocument : Parser<_> =
-    many1Till (pRuleRecord .>> (many (newline <|> pSpace))) eof
+    skipGarbage
+    >>. many1Till (skipAnyWhitespace >>. pRuleRecord .>> skipAnyWhitespace .>> optional skipComment .>> optional (skipNewline .>> skipGarbage)) eof
     <!> "pDocument"
     <?> "pDocument"
 
